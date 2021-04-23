@@ -14,9 +14,9 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
-#define error_sdl printf("sdl error. Error: %s\n", SDL_GetError());
-#define error_img printf("image error. Error: %s\n", IMG_GetError());
-#define error_tru printf("ttf error. Error: %s\n", TTF_GetError());
+#define error {printf("sdl error. Error: %s\n", SDL_GetError()); close()}
+#define error_i {printf("image error. Error: %s\n", IMG_GetError()); close()}
+#define error_t {printf("ttf error. Error: %s\n", TTF_GetError()); close()}
 
 const int WIDTH = 1280;
 const int HEIGHT = 720;
