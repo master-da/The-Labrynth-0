@@ -19,6 +19,9 @@
 #define error_i {printf("image error in line %d. Error: %s\n", __LINE__, IMG_GetError()); close();}
 #define error_t {printf("ttf error in line %d. Error: %s\n", __LINE__, TTF_GetError()); close();}
 
+// #include "loadUI.h"
+// #include "under_construction.h"
+
 const int WIDTH = 1280;
 const int HEIGHT = 720;
 
@@ -27,6 +30,16 @@ void close();
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 SDL_Rect VIEWPORT_GLOBAL = { 0, 0, WIDTH, HEIGHT };
+bool quit = false;
+SDL_Event e;
+bool screenUI;
+bool screenUInt;
+enum buttonStatus{
+    BUTTON_UNPRESSED,
+    BUTTON_HOVER,
+    BUTTON_PRESSED
+};
+
 
 void init(){
     if(SDL_Init( SDL_INIT_VIDEO ) < 0) error;
@@ -59,11 +72,11 @@ class LTexture{
         height = 0;
     }
 
-    void loadFromImage( std::string path , Uint8 r, Uint8 g ,Uint8 b ){
+    void loadFromImage( std::string path ){
         SDL_Surface* tempImage = IMG_Load( path.c_str() );
         if(tempImage == NULL) error;
 
-        SDL_SetColorKey ( tempImage, SDL_TRUE, SDL_MapRGB( tempImage->format, r, g, b ) );
+        // SDL_SetColorKey ( tempImage, SDL_TRUE, SDL_MapRGB( tempImage->format, r, g, b ) );
 
         texture = SDL_CreateTextureFromSurface( gRenderer, tempImage );
         if(texture == NULL) error;
@@ -71,6 +84,11 @@ class LTexture{
         width = tempImage->w;
         height = tempImage->h;
         SDL_FreeSurface( tempImage );
+    }
+
+    void render( int x, int y ){
+        SDL_Rect dest = {x, y, NULL, NULL};
+        SDL_RenderCopy( gRenderer, texture, NULL, NULL);
     }
 
     private:
@@ -139,26 +157,20 @@ class Button{
         SDL_RenderCopy( gRenderer, button, &source, &dest );
     }
 
+    int getStatus(){return buttonStatus;}
+
     private:
     SDL_Texture* button = NULL;
     SDL_Rect dest;
     int x = 0;
     int y = 0;
 
-    enum buttonStatus{
-        BUTTON_UNPRESSED,
-        BUTTON_HOVER,
-        BUTTON_PRESSED
-    };
-
     int given_width = 0;
     int given_height = 0;
 
     int my_width = 0;
     int my_height = 0;
-
     int buttonStatus = BUTTON_UNPRESSED;
-
     
 };
 
@@ -217,16 +229,31 @@ class Sprite{
     int slow = 0;
 };
 
-Button butarr[4];
+Button button_start;
+Button button_load;
+Button button_options;
+Button button_quit;
+
 Sprite fire_sprite_left;
 Sprite fire_sprite_right;
 
-void loadmedia(){
-    for(int i=0; i<4; i++) {
-        butarr[i].loadFromImage( "png/sprite_sheet/button_pressed_sprite_dark.png", 255, 255, 255);
-        butarr[i].setSize(240, 120);
-        butarr[i].setDest( 400, 100 + i*120 , 480, 120);
-    }
+void loadmediaUI(){
+    button_start.loadFromImage( "png/sprite_sheet/button_pressed_sprite_dark.png", 255, 255, 255);
+    button_start.setSize(240, 120);
+    button_start.setDest( 400, 100 + 0*120 , 480, 120);
+
+    button_load.loadFromImage( "png/sprite_sheet/button_pressed_sprite_dark.png", 255, 255, 255);
+    button_load.setSize(240, 120);
+    button_load.setDest( 400, 100 + 1*120 , 480, 120);
+
+    button_options.loadFromImage( "png/sprite_sheet/button_pressed_sprite_dark.png", 255, 255, 255);
+    button_options.setSize(240, 120);
+    button_options.setDest( 400, 100 + 2*120 , 480, 120);
+
+    button_quit.loadFromImage( "png/sprite_sheet/button_pressed_sprite_dark.png", 255, 255, 255);
+    button_quit.setSize(240, 120);
+    button_quit.setDest( 400, 100 + 3*120 , 480, 120);
+
     fire_sprite_left.loadFromImage( "png/sprite_sheet/fire_sprite.png", 0, 0, 0 );
     fire_sprite_left.setinfo( 128, 128 , 25, 5, 5 );
     fire_sprite_left.setDest( 240, 296 );
@@ -236,28 +263,113 @@ void loadmedia(){
     fire_sprite_right.setDest( 912, 296 );
 }
 
-int main(int argc, char* argv[])
-{
-    init();
-    loadmedia();
-    bool quit = false;
-    SDL_Event e;
-
+void loadUI(){
     while(!quit){
-
+        if(!screenUI) break;
         while( SDL_PollEvent( &e ) ){
             if(e.type == SDL_QUIT) quit = 1;
-            else for(int i=0; i<4; i++) butarr[i].eventProcessor( e );
+            else {
+                button_start.eventProcessor( e );
+                button_load.eventProcessor( e );
+                button_options.eventProcessor( e );
+                button_quit.eventProcessor( e );
+            }
         }
 
         SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 255);
         SDL_RenderClear( gRenderer );
 
-        for(int i=0; i<4; i++)butarr[i].render(); 
+        button_start.render(); 
+        button_load.render(); 
+        button_options.render();
+        button_quit.render();        
+
         fire_sprite_left.render();
         fire_sprite_right.render();
 
         SDL_RenderPresent( gRenderer );
+        printf("button_start status %d\n", button_start.getStatus());
+        if( button_start.getStatus() == BUTTON_PRESSED ){
+            screenUI = false;
+            screenUInt = true;
+            break;
+        }
+        if( button_load.getStatus() == BUTTON_PRESSED ){
+            screenUI = false;
+            screenUInt = true;
+            break;
+        }
+        if( button_options.getStatus() == BUTTON_PRESSED ){
+            screenUI = false;
+            screenUInt = true;
+            break;
+        }
+        if( button_quit.getStatus() == BUTTON_PRESSED ){
+            screenUI = false;
+            quit = true;
+            break;
+        }
+    }
+}
+
+void UI(){
+    loadmediaUI();
+    loadUI();
+}
+
+
+LTexture noScreen;
+Button noScreen_Back;
+
+void loadmediaUInt(){
+    noScreen.loadFromImage( "png/under_construction.png" );
+
+    noScreen_Back.loadFromImage( "png/sprite_sheet/button_pressed_sprite.png", 255, 255, 255 );
+    noScreen_Back.setSize( 240, 120 );
+    noScreen_Back.setDest( 20, 20, 75, 75 );
+}
+
+void loadUInt(){
+    while(!quit) {
+        while(SDL_PollEvent( &e )){
+            if( e.type == SDL_QUIT ) quit = 1;
+            else noScreen_Back.eventProcessor( e );
+        }
+
+        SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 255 );
+        SDL_RenderClear( gRenderer );
+
+        noScreen.render(0, 0);
+        noScreen_Back.render();
+
+        SDL_RenderPresent( gRenderer );
+
+        if( noScreen_Back.getStatus() == BUTTON_PRESSED ) {
+            screenUInt = false;
+            screenUI = true;
+            break;
+        }
+    }
+}
+
+
+void UInt(){
+    loadmediaUInt();
+    loadUInt();
+}
+
+
+int main(int argc, char* argv[])
+{
+    init();
+    quit = false;
+    screenUI = true;
+    screenUInt = false;
+    
+
+    while(!quit){
+        if( screenUI ) UI();
+        else if(screenUInt) UInt();
     }
     
     return 0;
