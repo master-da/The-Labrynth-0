@@ -14,6 +14,8 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
+#include "UI.cpp"
+
 #define error {printf("sdl error in line %d. Error: %s\n", __LINE__, SDL_GetError()); close();}
 #define error_i {printf("image error in line %d. Error: %s\n", __LINE__, IMG_GetError()); close();}
 #define error_t {printf("ttf error in line %d. Error: %s\n", __LINE__, TTF_GetError()); close();}
@@ -92,12 +94,7 @@ class Button{
         dest = {0, 0, width, height};
     }
 
-    void setSize( int w, int h ){
-        width = w;
-        height = h;
-    }
-
-    void loadFromImage( std::string path , Uint8 r, Uint8 g ,Uint8 b ){
+    void loadFromImage( std::string path , Uint8 r, Uint8 g ,Uint8 b ){ //loads all button states as a texture
         SDL_Surface* tempImage = IMG_Load( path.c_str() );
         if(tempImage == NULL) error;
 
@@ -124,11 +121,17 @@ class Button{
         }
     }
 
-    void setDest(int x, int y){
+    void setSize( int w, int h ){ //must be called before setDest. Sets the width and height of button itself
+        width = w;
+        height = h;
+    }
+
+    void setDest(int x, int y){ //sets the position the button is rendered. Must have width and height defined
+        if(!width || !height) printtf("Warning! Button dimensions not set.\n";)
         dest = {x, y, width, height};
     }
 
-    void render(){
+    void render(){      //checks if the button is pressed or not before rendering
         SDL_Rect source = {0, 0, width, height} ;
         if(buttonStatus == BUTTON_PRESSED) source.x = 2*width;
         else if( buttonStatus == BUTTON_HOVER) source.x = width;
@@ -155,7 +158,7 @@ class Sprite{
         slow = 0;
     }
 
-    void loadFromImage( std::string path , Uint8 r, Uint8 g ,Uint8 b ){
+    void loadFromImage( std::string path , Uint8 r, Uint8 g ,Uint8 b ){ //laods entire sprite-sheet
         SDL_Surface* tempImage = IMG_Load( path.c_str() );
         if(tempImage == NULL) error;
 
@@ -167,20 +170,24 @@ class Sprite{
         SDL_FreeSurface( tempImage );
     }
 
-    void setSize(int w, int h){
+    //sets the width and heiht of each sprite state. Must be called before setDest
+    void setinfo(int w, int h, int states , int per_row, int per_col ){ 
         width = w;
         height = h;
+        sprite_states = states;
+        sprites_per_row = per_row;
+        sprites_per_col = per_col;
     }
 
-    void setDest( int x1, int y1, int x2, int y2 ){
+    void setDest( int x1, int y1, int x2, int y2 ){//sets the rectangle to render sprite in. setInfo muts've been called
         dest1 = {x1, y1, width, height};
-        dest2 = {x2, y2, width, height};
+        dest2 = {x2, y2, width, height}; //im being lazy and rendering same sprite in 2 positions. I should fix.
     }
 
     void render(){
-        int frame = slow/4;
-        if(frame > 24) frame = slow = 0;
-        source = { width * (frame%5),  height * (frame/5), width , height };
+        int frame = slow/4; //frame holds which sprite state to render. Slowing speed by a factor of 4
+        if(frame >= sprite_states) frame = slow = 0;    //resetting sprite to cycle around
+        source = { width * (frame%sprites_per_row),  height * (frame/sprites_per_row), width , height };//setting which frame to be rendered
         SDL_RenderCopy( gRenderer, texture, &source, &dest1 );
         SDL_RenderCopy( gRenderer, texture, &source, &dest2 );
         slow++;
@@ -193,6 +200,9 @@ class Sprite{
     SDL_Rect dest2;
     int width = 0;
     int height = 0;
+    int sprite_states = 0;
+    int sprites_per_row = 0;
+    int sprites_per_col = =0;
     int slow = 0;
 };
 
