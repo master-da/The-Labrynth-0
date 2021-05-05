@@ -79,6 +79,7 @@ struct Game{
         if( buttonID == BUTTON_OPTIONS ) current_screen = OPTIONS_SCREEN;
         if( buttonID == BUTTON_HISCORE ) current_screen = HISCORE_SCREEN;
         if( buttonID == BUTTON_QUIT ) current_screen = QUIT_SCREEN;
+        if( buttonID == BUTTON_BACK ) current_screen = UI_SCREEN;
     }
 
     close(){
@@ -113,14 +114,14 @@ struct LTexture{
     void loadFromFile( std::string path ){
 
         SDL_Surface* imgTemp = IMG_Load( path.c_str() );
-        // if( imgTemp ) printf("Image loaded from \"%s\"\n", path.c_str() );
-        // else error_i;
-        if(imgTemp == NULL) error_i;
+        if( imgTemp ) printf("Image loaded from \"%s\"\n", path.c_str() );
+        else error_i;
+        // if(imgTemp == NULL) error_i;
         
         texture = SDL_CreateTextureFromSurface( gGame->renderer, imgTemp);
-        // if( texture ) printf("Texture Loaded\n");
-        // else error;
-        if(texture == NULL) error;
+        if( texture ) printf("Texture Loaded\n");
+        else error;
+        // if(texture == NULL) error;
 
         width = imgTemp->w;
         height = imgTemp->h;

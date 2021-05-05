@@ -11,6 +11,7 @@ Button button_load(gGame->BUTTON_LOAD);
 Button button_options(gGame->BUTTON_OPTIONS);
 Button button_hiscore(gGame->BUTTON_HISCORE);
 Button button_quit(gGame->BUTTON_QUIT);
+Button button_back(gGame->BUTTON_BACK);
 
 int main(int argc, char* argv[])
 {
@@ -37,6 +38,7 @@ int main(int argc, char* argv[])
             button_quit.render( e );
         }
         else{
+            button_back.render( e );
             backup.render();
         }
 
@@ -55,8 +57,6 @@ void loadmedia(){
 
     button_start.loadFromFile( "png/buttons/start_default.png", "png/buttons/start_hover.png", "png/buttons/start_pressed.png");
     button_start.setDest( (gGame->SCREEN_WIDTH-250)/2 , 170, 250, 180);
-    printf("\n...\nx %d y %d w %d h %d\n...\n", button_start.button_pos.x, button_start.button_pos.y, button_start.button_pos.w, button_start.button_pos.h);
-    printf("\n...\nx %d y %d w %d h %d\n...\n", button_start.button[button_start.BUTTON_DEFAULT].pos.x, button_start.button[button_start.BUTTON_DEFAULT].pos.y, button_start.button[button_start.BUTTON_DEFAULT].pos.w, button_start.button[button_start.BUTTON_DEFAULT].pos.h);
 
     button_load.loadFromFile( "png/buttons/load_default.png", "png/buttons/load_hover.png", "png/buttons/load_pressed.png");
     button_load.setDest( (gGame->SCREEN_WIDTH-250)/2 , 240, 250, 180);
@@ -69,4 +69,7 @@ void loadmedia(){
 
     button_quit.loadFromFile( "png/buttons/quit_default.png", "png/buttons/quit_hover.png", "png/buttons/quit_pressed.png");
     button_quit.setDest( (gGame->SCREEN_WIDTH-250)/2 , 450, 250, 180);
+
+    button_back.loadFromFile("png/buttons/default.png", "png/buttons/hover.png", "png/buttons/pressed.png");
+    button_back.setDest( 10, 10, 100, 100);
 }
