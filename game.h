@@ -31,13 +31,15 @@ struct Game{
         LOAD_SCREEN,
         OPTIONS_SCREEN,
         HISCORE_SCREEN,
-    }
+        QUIT_SCREEN 
+    };
     enum buttonid{
         BUTTON_START,
         BUTTON_LOAD,
         BUTTON_OPTIONS,
         BUTTON_HISCORE,
-        BUTTON_QUIT
+        BUTTON_QUIT,
+        BUTTON_BACK
     };
 
     Game( int width , int height){
@@ -71,6 +73,14 @@ struct Game{
         else error;
     }
 
+    void button_action( int buttonID ){
+        if( buttonID == BUTTON_START ) current_screen = START_SCREEN;
+        if( buttonID == BUTTON_LOAD ) current_screen = LOAD_SCREEN;
+        if( buttonID == BUTTON_OPTIONS ) current_screen = OPTIONS_SCREEN;
+        if( buttonID == BUTTON_HISCORE ) current_screen = HISCORE_SCREEN;
+        if( buttonID == BUTTON_QUIT ) current_screen = QUIT_SCREEN;
+    }
+
     close(){
         SDL_Quit();
         IMG_Quit();
@@ -81,6 +91,7 @@ Game* gGame = new Game( 1280, 720 );
 
 struct LTexture{
     SDL_Texture* texture;
+    SDL_Rect pos;
     int width;
     int height;
 
@@ -102,12 +113,14 @@ struct LTexture{
     void loadFromFile( std::string path ){
 
         SDL_Surface* imgTemp = IMG_Load( path.c_str() );
-        if( imgTemp ) printf("Image loaded from \"%s\"\n", path.c_str() );
-        else error_i;
+        // if( imgTemp ) printf("Image loaded from \"%s\"\n", path.c_str() );
+        // else error_i;
+        if(imgTemp == NULL) error_i;
         
         texture = SDL_CreateTextureFromSurface( gGame->renderer, imgTemp);
-        if( texture ) printf("Texture Loaded\n");
-        else error;
+        // if( texture ) printf("Texture Loaded\n");
+        // else error;
+        if(texture == NULL) error;
 
         width = imgTemp->w;
         height = imgTemp->h;
@@ -131,9 +144,12 @@ struct LTexture{
         SDL_FreeSurface( imgTemp );
     }
 
-    void render(int x, int y){
-        SDL_Rect dest = {x, y, width, height};
-        SDL_RenderCopy( gGame->renderer, texture, NULL, &dest);
+    void setDest(int x, int y, int w, int h ){
+        pos = {x, y, w, h};
+    }
+
+    void render(){
+        SDL_RenderCopy( gGame->renderer, texture, NULL, &pos);
     }
 
 };
@@ -163,27 +179,33 @@ struct Button{
         button[BUTTON_PRESSED].loadFromFile( pressed_path );
     }
 
-    void setDest(int x, int y){ button_pos = {x, y, button[BUTTON_DEFAULT].width, button[BUTTON_DEFAULT].height }; }
+    void setDest(int x, int y, int w, int h){
+        // button_pos = {x, y, button[BUTTON_DEFAULT].width, button[BUTTON_DEFAULT].height }; 
+        button_pos = {x, y, w, h }; 
+        for(int i=0; i<3; i++) button[i].setDest(x, y, w, h);
+    }
 
     void render( SDL_Event e){
         event_handler( e );
-        SDL_RenderCopy( gGame->renderer, button[button_status], NULL, button_pos );
+        // SDL_RenderCopy( gGame->renderer, button[button_status].texture, NULL, &button_pos );
+        button[button_status].render();
     }
 
     void event_handler( SDL_Event e){
         int x, y;
-        SDL_GetMouseState( x, y );
+        SDL_GetMouseState( &x, &y );
 
-        if(x < button_pos.x) button_status = BUTTON_DEFAULT;
-        if(x > button_pos.x + button_pos.w) button_status = BUTTON_DEFAULT;
-        if(y < button_pos.y) button_status = BUTTON_DEFAULT;
-        if(y > button_pos.y + button_pos.h) button_status = BUTTON_DEFAULT;
+        if(x < button[BUTTON_DEFAULT].pos.x) button_status = BUTTON_DEFAULT;
+        else if(x > button[BUTTON_DEFAULT].pos.x + button[BUTTON_DEFAULT].pos.w) button_status = BUTTON_DEFAULT;
+        else if(y < button[BUTTON_DEFAULT].pos.y) button_status = BUTTON_DEFAULT;
+        else if(y > button[BUTTON_DEFAULT].pos.y + button[BUTTON_DEFAULT].pos.h) button_status = BUTTON_DEFAULT;
 
-        if( e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT && e.button.state == SDL_PRESSED ){
-            buttos_s = BUTTON_PRESSED;
+        else if( e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT && e.button.state == SDL_PRESSED ){
+            button_status = BUTTON_PRESSED;
         }
-        else if( e.type == SDL_MOUSEBUTTONUP  && e.button.button == SDL_BUTTON_LEFT && e.buton.state == SDL_RELEASED ){
+        else if( e.type == SDL_MOUSEBUTTONUP  && e.button.button == SDL_BUTTON_LEFT && e.button.state == SDL_RELEASED ){
             button_status = BUTTON_HOVER;
+            gGame->button_action( buttonID );
         }
         else button_status = BUTTON_HOVER;
 
