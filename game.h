@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdio.h>
 #include <iostream>
 #include <math.h>
@@ -18,7 +20,7 @@
 #define error {printf("SDL Error in line %d. Error: %s\n", __LINE__, SDL_GetError());}
 #define error_i {printf("SDL Image Error in line %d. Error: %s\n", __LINE__, IMG_GetError());}
 #define error_t {printf("TTF Error in line %d. Error: %s\n", __LINE__, TTF_GetError());}
-
+#define error_m {printf("mixer error in line %d. Error: %s\n", __LINE__, MIX_GetError());}
 
 struct Game{
     SDL_Window* window;
@@ -41,6 +43,11 @@ struct Game{
         BUTTON_QUIT,
         BUTTON_BACK
     };
+    enum tiletypes{
+        ACCESSIBLE,
+        UNACCESSIBLE
+    };
+
 
     Game( int width , int height){
         window = NULL;
@@ -57,7 +64,7 @@ struct Game{
         close();
     }
 
-    init( std::string name, int x, int y, bool fullscreen ){
+    void init( std::string name, int x, int y, bool fullscreen ){
         if(SDL_Init( SDL_INIT_VIDEO ) == 0) printf("SDL Initialised with video\n");
         else error;
 
@@ -82,7 +89,15 @@ struct Game{
         if( buttonID == BUTTON_BACK ) current_screen = UI_SCREEN;
     }
 
-    close(){
+    bool collission(SDL_Rect* a, SDL_Rect* b){
+        if(a->x > b->x+b->w) return 0;
+        if(a->x+a->w < b->x) return 0;
+        if(a->y > b->y+b->h) return 0;
+        if(a->y+a->w < b->y) return 0;
+        return 1;
+    }
+
+    void close(){
         SDL_Quit();
         IMG_Quit();
     }
@@ -146,11 +161,12 @@ struct LTexture{
     }
 
     void setDest(int x, int y, int w, int h ){
-        pos = {x, y, w, h};
+        pos = {x, y, 50, 50};
     }
 
     void render(){
-        SDL_RenderCopy( gGame->renderer, texture, NULL, &pos);
+        // printf("\n...\nx %d y %d w %d h %d\n...\n", pos.x, pos.y, pos.w, pos.h);
+        if( SDL_RenderCopy( gGame->renderer, texture, NULL, &pos) < 0) error;
     }
 
 };
