@@ -2,7 +2,7 @@
 
 void loadmedia(){
     gPlayer.loadFromFile("png/idle_player.png", "png/walk_player.png");
-    gEnemy_one_lw.loadFromFile("png/walk_enemy.png");
+    gEnemy_one_lr.loadFromFile("png/walk_enemy.png");
     gTile.loadImageFromFile( "png/level-1-tiles.png" );
     gTile.loadInfoFromFile( "map/mapped.txt ");
 }
@@ -22,11 +22,11 @@ int main(int argc, char* argv[])
         SDL_SetRenderDrawColor( gGame->renderer, 0, 0, 0, 255);
 
         gPlayer.event_handler( e );
-        gEnemy_one_lw.move();
+        gEnemy_one_lr.handle_event();
         gGame->camera_set( &gPlayer.dest );
 
         gTile.render( gGame->camera );
-        gEnemy_one_lw.render( gGame->camera );
+        gEnemy_one_lr.render( gGame->camera );
         gPlayer.render();
 
         SDL_RenderPresent( gGame->renderer );

@@ -386,6 +386,7 @@ struct Player{
     SDL_Texture* look[PLAYER_TOTAL_STATI];
     SDL_Rect src;
     SDL_Rect dest;
+    SDL_Point player_center;
 
     Player(int x, int y, int w, int h){
         xVel = 0;
@@ -401,6 +402,7 @@ struct Player{
         sprite_per_col[PLAYER_MOVE] = 3;
         player_status = PLAYER_IDLE;
 
+        player_center = {x*w + w/2, y*h + h/2};
         dest = {x*w, y*h, w, h};
         src = {0, 0, w, h};
 
@@ -467,6 +469,8 @@ struct Player{
         dest.y += yVel;
         if(dest.y<0 || dest.y + dest.h > gGame->SCREEN_HEIGHT || gTile.tile_gate_wall_collission(&dest, 7)) dest.y -= yVel;
 
+        player_center.x = dest.x + dest.w / 2;
+        player_center.y = dest.y + dest.h / 2;
     }
 
     void render(){
@@ -505,11 +509,13 @@ struct Enemy{
     int route_length;
     int sprites_per_row;
     int sprites_per_col;
+    int attack_range;
 
     SDL_Texture* look;
     SDL_Rect src;
     SDL_Rect dest;
     SDL_RendererFlip flip;
+    SDL_Point enemy_center;
 
     Enemy(SDL_Rect dimensions, bool route){
 
@@ -517,6 +523,7 @@ struct Enemy{
         dest = { dimensions.x*dimensions.w, dimensions.y*dimensions.h, dimensions.w, dimensions.h };
         originX = dimensions.x;
         originY = dimensions.y;
+        enemy_center = {dimensions.x*dimensions.w + dimensions.w/2, dimensions.y*dimensions.h + dimensions.h / 2};
 
         xVel = route*2;
         yVel = !route*2;
@@ -525,6 +532,7 @@ struct Enemy{
         route_length = 50;
         sprites_per_row = 6;
         sprites_per_col = 3;
+        attack_range = 200;
 
         enemy_status = ENEMY_PATROL;
         flip = SDL_FLIP_NONE;
@@ -547,7 +555,94 @@ struct Enemy{
         tempImage = NULL;
     }
 
-    void move(){
+    struct LineOfSight{
+
+        int dx;
+        int dy;
+        int range;
+
+        SDL_Point start;
+        SDL_Point end;
+
+        LineOfSight( SDL_Point* player_center , SDL_Point* enemy_center, int& attack_range){
+            start = *player_center;
+            end = *enemy_center;
+            
+            dx = end.x - start.x;
+            dy = end.y  - start.y;
+            range = attack_range * attack_range;
+        }
+
+        bool in_range(){
+            return dx * dx + dy * dy <= range;
+        }
+
+        bool low_slope( SDL_Point start, SDL_Point end ){
+            
+            int y_increment = gTile.tile_width;
+            int x_increment = gTile.tile_height;
+            if( dy < 0 ) y_increment = -y_increment, dy = -dy;
+
+            int decision_factor = 2 * dy - dx;
+            while(start.x < end.x){
+                start.x += x_increment;
+
+                if(decision_factor > 0) start.y += y_increment, decision_factor += (2*(dy-dx));
+                else decision_factor += (2*dy);
+
+                int tileType = gTile. tile_type [start.y/gTile.tile_height][start.x/gTile.tile_width];
+                if( (tileType == gTile.TILE_WALL) || (tileType == gTile.TILE_SLOPE) || (tileType ==gTile.TILE_GATE) ) {
+                    return 0;
+                }
+            }
+
+            return 1;
+        }
+
+        bool hi_slope( SDL_Point start, SDL_Point end ){
+            if( dy < 0 ) return low_slope( end, start );
+
+            int x_increment = gTile.tile_height;
+            int y_increment = gTile.tile_width;
+            if( dx < 0 ) x_increment = -x_increment, dx = -dx;
+
+            int decision_factor = 2 * dx - dy;
+            while(start.y < end.y){
+                start.y += y_increment;
+
+                if(decision_factor > 0) start.x += x_increment, decision_factor += (2*(dx-dy));
+                else decision_factor += (2*dx);
+
+                int tileType = gTile. tile_type [start.y/gTile.tile_height][start.x/gTile.tile_width];
+                if( (tileType == gTile.TILE_WALL) || (tileType == gTile.TILE_SLOPE) || (tileType ==gTile.TILE_GATE) ) {
+                    return 0;
+                }
+            }
+
+            return 1;
+        }
+
+        bool line() {
+            if( dx * dx + dy * dy > range ) {
+                return 0;
+            }
+            if( abs(dy) > abs(dx) ) {
+                if(dy > 0) return hi_slope( start, end) ;
+                else return hi_slope( end, start );
+            }
+            else {
+                if(dx > 0) return low_slope( start, end );
+                else return low_slope( end, start );
+            }
+        }
+    };
+
+    void handle_event(){
+        LineOfSight loS( &gPlayer.player_center, &enemy_center, attack_range );
+        if(loS.line())  {
+            return;
+        }
+
         bool wallCollission = false;
 
         dest.x += xVel;
@@ -557,6 +652,8 @@ struct Enemy{
 
         dest.y += yVel;
         if(dest.y<0 || dest.y + dest.h > gGame->SCREEN_HEIGHT || gTile.tile_gate_wall_collission(&dest, 0) || dest.y == originY + route_length || dest.y == originY) yVel = -yVel;
+
+        enemy_center = {dest.x + dest.w / 2, dest.y + dest.h / 2};
 
         if(xVel > 0) flip = SDL_FLIP_NONE;
         if(xVel < 0) flip = SDL_FLIP_HORIZONTAL;
@@ -581,4 +678,4 @@ struct Enemy{
         dest.x += translateX;
         dest.y += translateY;
     }
-}gEnemy_one_lw({4, 4, 32, 32}, 1);
+}gEnemy_one_lr({26, 24, 32, 32}, 1);
