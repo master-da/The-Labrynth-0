@@ -6,7 +6,7 @@ INCLUDE_PATHS = -IC:\MinGW\include
 
 LIBRARY_PATHS = -LC:\MinGW\lib
 
-COMPILER_FLAGS = -w
+COMPILER_FLAGS = -Wall
 
 LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer -lSDL2_ttf
 
