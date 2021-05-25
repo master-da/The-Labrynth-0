@@ -18,17 +18,17 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 
-#define error {printf("SDL Error in line %d. Error: %s\n", __LINE__, SDL_GetError());}
-#define error_i {printf("SDL Image Error in line %d. Error: %s\n", __LINE__, IMG_GetError());}
-#define error_t {printf("TTF Error in line %d. Error: %s\n", __LINE__, TTF_GetError());}
-#define error_m {printf("mixer error in line %d. Error: %s\n", __LINE__, MIX_GetError());}
+#define error {printf("SDL Error in established %d. Error: %s\n", __LINE__, SDL_GetError());}
+#define error_i {printf("SDL Image Error in established %d. Error: %s\n", __LINE__, IMG_GetError());}
+#define error_t {printf("TTF Error in established %d. Error: %s\n", __LINE__, TTF_GetError());}
+#define error_m {printf("mixer error in established %d. Error: %s\n", __LINE__, MIX_GetError());}
 
 struct Game{
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Rect camera;
-    int SCREEN_WIDTH, SCREEN_HEIGHT;
-    int RENDER_WIDTH, RENDER_HEIGHT;
+    int SCREEN_WIDTH, SCREEN_HEIGHT;    //dimensions of the total level. LEVEL_WIDHT would make more sense but i'm too lazy to change 
+    int RENDER_WIDTH, RENDER_HEIGHT;    //dimensions of the camera that will follow player. The area of the map to be rendered
     int current_screen;
 
     enum screens{
@@ -55,13 +55,14 @@ struct Game{
         SCREEN_HEIGHT = height;
         RENDER_WIDTH = 800;
         RENDER_HEIGHT = 600;
-        camera = {0, 0, RENDER_WIDTH, RENDER_HEIGHT};
+        camera = {0, 0, RENDER_WIDTH, RENDER_HEIGHT};       //SDL_Rect camera now know what part to render
         current_screen = UI_SCREEN;
     }
     ~Game(){
         close();
     }
-
+    
+    //main initializer function
     void init( std::string name, int x, int y, bool fullscreen ){
         if(SDL_Init( SDL_INIT_VIDEO ) == 0) printf("SDL Initialised with video\n");
         else error;
@@ -70,7 +71,7 @@ struct Game{
         if( window ) printf("Window intialised\n");
         else error;
 
-        if(IMG_Init( IMG_INIT_PNG )&IMG_INIT_PNG == IMG_INIT_PNG) printf("Image Initialised with PNG\n");
+        if(IMG_Init( IMG_INIT_PNG )&(IMG_INIT_PNG == IMG_INIT_PNG)) printf("Image Initialised with PNG\n");
         else error_i;
 
         renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC );
@@ -87,6 +88,7 @@ struct Game{
         if( buttonID == BUTTON_BACK ) current_screen = UI_SCREEN;
     }
 
+    //AABB collission detection. Obsolete. I didn't use it anywhere
     bool collission(SDL_Rect* a, SDL_Rect* b){
         if(a->x > b->x+b->w) return 0;
         if(a->x+a->w < b->x) return 0;
@@ -95,6 +97,7 @@ struct Game{
         return 1;
     }
 
+    //after every player movement, focus camera on player head, and render a 800x600 region around player
     void camera_set(SDL_Rect* rect){
         camera.x = rect->x+rect->w/2-RENDER_WIDTH/2;
         camera.y = rect->y+rect->h/2-RENDER_HEIGHT/2;
@@ -118,6 +121,8 @@ struct Game{
 
 Game* gGame = new Game( 1280, 960 );
 
+
+//LTexture. Obsolete. Didn't use it anywhere
 struct LTexture{
     SDL_Texture* texture;
     SDL_Rect pos;
@@ -184,6 +189,7 @@ struct LTexture{
 
 };
 
+//buttons that doesn't work now lol
 struct Button{
     LTexture button[3];
     SDL_Rect button_pos;
@@ -242,12 +248,14 @@ struct Button{
     }
 };
 
+//Tile information of the map being rendered. what tile goes where
 struct Tile{
     SDL_Texture* tileImage;
     
     int tile_width, tile_height;
     int tile_type[30][40];
 
+    //array par[i] associates i'th switch to i'th gate. for switch i, par[i] has it's gate's column and row 
     struct gate_switch_parent{
         int gate_row;
         int gate_col;
@@ -268,6 +276,7 @@ struct Tile{
         tile_width = w;
         tile_height = h;
 
+        //location of different tile types in my tilesheet. NEEDS TO BE CHANGED FOR NEW TILESHEET
         tiles[TILE_WALL] = {32, 0, 32, 32};
         tiles[TILE_SLOPE] = {0, 32, 32, 32};
         tiles[TILE_WALK] = {0, 0, 32, 32};
@@ -275,6 +284,7 @@ struct Tile{
         tiles[TILE_GATE] = {32, 32, 32, 32};
     }
 
+    //loads tilesheep from file
     void loadImageFromFile( std::string path ){
 
         SDL_Surface* imgTemp = IMG_Load( path.c_str() );
@@ -288,6 +298,7 @@ struct Tile{
         SDL_FreeSurface( imgTemp );
     }
 
+    //loads map info. What tile goes where. Which tile from the tilesheet goes where
     void loadInfoFromFile( std::string path ){
         std::ifstream map( path );
 
@@ -307,6 +318,7 @@ struct Tile{
         map.close();
     }
 
+    //detects and entity's collission with gate or wall. trims the entity's dimensions so it can fit into smaller spaces
     int tile_gate_wall_collission (SDL_Rect* a, int trim ){
         int topleft = tile_type[ (a->y + trim) / tile_height ][ (a->x + trim)/ tile_width ] % 100;
         int topright = tile_type[ (a->y+trim)/tile_height ][ (a->x+a->w-trim)/tile_width ] % 100;
@@ -319,6 +331,7 @@ struct Tile{
         (botright == TILE_WALL || botright == TILE_SLOPE || botright == TILE_GATE) );
     }
 
+    //checks if an entity is colliding with some button
     int tile_button_collission (SDL_Rect* a){
         if (tile_type[ a->y / tile_height ][ a->x / tile_width ] % 100 == TILE_BUTTON) 
             return tile_type[ a->y / tile_height ][ a->x / tile_width ] / 100; 
@@ -335,11 +348,15 @@ struct Tile{
         else return 0;
     }
 
+    //takes camera as argument. Renders all tiles that fit into the camera. Probably renders 1 tile along all directions outside the camera
     void render( SDL_Rect& camera ){
         int x, y;
         int renderX = 0, renderY = 0;
+
+        //if camera border of the camera is in the middle of some tile, renders the tiles slightly outside the range of the camera
         int translateX = (camera.x)%tile_width, translateY = (camera.y)%tile_height;
 
+        //inerates from left of the camera to right, and top to bottom to find all the tiles that fit within
         for(y = camera.y; y<= (camera.y+camera.h+tile_height); y += tile_height, renderY += tile_height, renderX = 0){
             for(x = camera.x; x <= (camera.x+camera.w+tile_width); x += tile_width, renderX += tile_width){
 
@@ -347,10 +364,13 @@ struct Tile{
                 
                 int type = tile_type [ (int)(y / tile_height) ] [ (int)(x / tile_width) ] % 100;
 
+                //renders walkable tile under all tiles. so gates and switches seems like they're on walkable tiles
                 SDL_RenderCopy( gGame->renderer, tileImage, &tiles[TILE_WALK], &dest);
 
                 float angle = 0.0;
 
+                //makes sure dark side of the slope tile is facing the walkable tile
+                //NEED TO CHANGE IF USING NEW TEXTUREPACK
                 if(type == TILE_SLOPE){
                     if(tile_type [ (int)(y / tile_height) ] [ (int)(x / tile_width) + 1] == TILE_WALL) angle = 90.0;
                     else if(tile_type [ (int)(y / tile_height) ] [ (int)(x / tile_width) - 1] == TILE_WALL) angle = 270.0;
@@ -363,47 +383,57 @@ struct Tile{
         }
     }
 
-}gTile(32, 32);
+};
 
+Tile gTile(32, 32);//tiles are of dimensions 32x32px
+
+//Player structure
 struct Player{
 
     enum player_status_list{
-        PLAYER_IDLE,//0
-        PLAYER_MOVE,//1
-        PLAYER_TOTAL_STATI//2
+        PLAYER_IDLE,
+        PLAYER_MOVE,
+        PLAYER_ATTACK,
+        PLAYER_TOTAL_STATI
     };
 
-    int xVel, yVel;
-    int frame;
-    int slow_factor[PLAYER_TOTAL_STATI];
+    int xVel, yVel; //amout of pixels player displaces by every time it moves
+    int frame;      //the sprite from the spritesheet that will be renderer
+    int slow_factor[PLAYER_TOTAL_STATI];    //player being slowed a little
 
     SDL_RendererFlip flip;
 
-    int sprite_per_row[PLAYER_TOTAL_STATI];
+    //walk, attack, idle -each sprite sheet has different numbers of sprites per row and column
+    int sprite_per_row[PLAYER_TOTAL_STATI]; 
     int sprite_per_col[PLAYER_TOTAL_STATI];
-    int player_status;
+    int player_status;  //knows if the player is idle, walking or attacking
 
-    SDL_Texture* look[PLAYER_TOTAL_STATI];
-    SDL_Rect src;
-    SDL_Rect dest;
-    SDL_Point player_center;
+    bool attacking; //player can't move if it is in attack animation
 
-    Player(int x, int y, int w, int h){
+    SDL_Texture* look[PLAYER_TOTAL_STATI];  //look is player's texture. differnt spritesheet for walking attacking etc
+    SDL_Rect src;   //source rectangle from the spritesheet
+    SDL_Rect dest;  //destination rentangle in the map
+    SDL_Point player_center;    //center of player's body. need it for line of sight
+
+    Player(int w, int h){
         xVel = 0;
         yVel = 0;
         frame = 0;
+        attacking = 0;
 
         slow_factor[PLAYER_IDLE] = 7;
         slow_factor[PLAYER_MOVE] = 4;
+        slow_factor[PLAYER_ATTACK] = 4;
 
         sprite_per_row[PLAYER_IDLE] = 6;
         sprite_per_col[PLAYER_IDLE] = 2;
         sprite_per_row[PLAYER_MOVE] = 6;
         sprite_per_col[PLAYER_MOVE] = 3;
+        sprite_per_row[PLAYER_ATTACK] = 6;
+        sprite_per_col[PLAYER_ATTACK] = 2;
         player_status = PLAYER_IDLE;
 
-        player_center = {x*w + w/2, y*h + h/2};
-        dest = {x*w, y*h, w, h};
+        dest = {0, 0, w, h};
         src = {0, 0, w, h};
 
         flip = SDL_FLIP_NONE;
@@ -412,7 +442,8 @@ struct Player{
         xVel = yVel = 0;
     }
 
-    void loadFromFile( std::string idle_path, std::string move_path ){
+    //loading all the player sprites
+    void loadFromFile( std::string idle_path, std::string move_path , std::string attack_path ){
 
         SDL_Surface* imgTemp = IMG_Load( idle_path.c_str() );
         if( imgTemp ) printf("Image loaded from \"%s\"\n", idle_path.c_str() );
@@ -430,14 +461,71 @@ struct Player{
         if( look[PLAYER_MOVE] ) printf("player texture Loaded\n");
         else error;
 
+        imgTemp = IMG_Load( attack_path.c_str() );
+        if( imgTemp ) printf("Image loaded from \"%s\"\n", attack_path.c_str() );
+        else error_i;
+        
+        look[PLAYER_ATTACK] = SDL_CreateTextureFromSurface( gGame->renderer, imgTemp);
+        if( look[PLAYER_ATTACK] ) printf("player texture Loaded\n");
+        else error;
+
         SDL_FreeSurface( imgTemp );
+        imgTemp = NULL;
     }
 
+    //only used to check if enemy throwable is colliding with platyer
+    bool rect_collission(SDL_Rect& rect){
+        if( rect.x + rect.w < dest.x ) return 0;
+        if( rect.x > dest.x + dest.w ) return 0;
+        if( rect.y + rect.h < dest.y ) return 0;
+        if( rect.y > dest.y + dest.h ) return 0;
+        return 1;
+    }
+
+    //set where the player will spawn for the level
+    void set_spawn_point( int x, int y ){
+        dest.x = x * dest.w;
+        dest.y = y * dest.h;
+
+        player_center = {x * dest.w + dest.w / 2, y * dest.h + dest.h / 2};
+    }
+
+    //moving player based on input
+    void move(){
+        frame++;
+        frame %= (sprite_per_row[PLAYER_MOVE] * sprite_per_col[PLAYER_MOVE] * slow_factor[PLAYER_MOVE] );
+
+        dest.x += xVel;
+        if(dest.x<0 || dest.x + dest.w > gGame->SCREEN_WIDTH || gTile.tile_gate_wall_collission(&dest, 7) ) dest.x -= xVel; 
+
+        dest.y += yVel;
+        if(dest.y<0 || dest.y + dest.h > gGame->SCREEN_HEIGHT || gTile.tile_gate_wall_collission(&dest, 7)) dest.y -= yVel;
+
+        player_center.x = dest.x + dest.w / 2;
+        player_center.y = dest.y + dest.h / 2;
+    }
+
+    //player will soon have it's stas defined. Work in progress lol
+    void get_damaged(){
+
+    }
+
+    void idle(){
+        frame++;
+        frame %= ( sprite_per_row[PLAYER_IDLE] * sprite_per_col[PLAYER_IDLE] * slow_factor[PLAYER_IDLE] );
+    }
+
+    void attack(){
+        frame++;
+        if(frame >= ( sprite_per_row[PLAYER_ATTACK] * sprite_per_col[PLAYER_ATTACK] * slow_factor[PLAYER_ATTACK] ) ) frame = 0, player_status = PLAYER_IDLE, attacking = false;
+    }
+
+    //handles players actions based on human input. Takes argument SDL_Event
     void event_handler( SDL_Event& e ){
 
-        static bool keyUpCheck = false;
+        static bool keyUpCheck = false;//will only check for SDL_KEYUP if we already have had the event SDL_KEYDOWN
 
-        if(e.type == SDL_KEYDOWN && !e.key.repeat ){
+        if(!attacking && e.type == SDL_KEYDOWN && !e.key.repeat ){
 
             if(e.key.keysym.sym == SDLK_w) yVel = -6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
             if(e.key.keysym.sym == SDLK_s) yVel = 6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
@@ -447,6 +535,7 @@ struct Player{
             if(e.key.keysym.sym == SDLK_e){
                 int tile_button_collission = gTile.tile_button_collission(&dest);
 
+                //if player collides with a switch and pressed e, corresponding gate will open
                 if(tile_button_collission){
                     int gate_row = gTile.par[tile_button_collission].gate_row;
                     int gate_col = gTile.par[tile_button_collission].gate_col;
@@ -454,42 +543,42 @@ struct Player{
                 }
             }
         }
-        else if(e.type == SDL_KEYUP && keyUpCheck) xVel = yVel = 0, player_status = PLAYER_IDLE, frame = 0, keyUpCheck = false;
 
-        frame++;
-        frame %= (sprite_per_row[player_status] * sprite_per_col[player_status] * slow_factor[player_status] );
+        //player can't move if it's in attack animation. Therefore the !attacking condition
+        else if(!attacking && e.type == SDL_KEYUP && keyUpCheck) 
+            xVel = yVel = 0, player_status = PLAYER_IDLE, frame = 0, keyUpCheck = false;
+        else if(!attacking && e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) 
+            player_status = PLAYER_ATTACK, frame = 0, attacking = true;
 
-        bool wallCollission = false;
-
-        dest.x += xVel;
-        if(dest.x<0 || dest.x + dest.w > gGame->SCREEN_WIDTH || gTile.tile_gate_wall_collission(&dest, 7) ) dest.x -= xVel; 
-
-        wallCollission = false;
-
-        dest.y += yVel;
-        if(dest.y<0 || dest.y + dest.h > gGame->SCREEN_HEIGHT || gTile.tile_gate_wall_collission(&dest, 7)) dest.y -= yVel;
-
-        player_center.x = dest.x + dest.w / 2;
-        player_center.y = dest.y + dest.h / 2;
+        if( player_status == PLAYER_IDLE) idle();
+        else if(player_status == PLAYER_MOVE) move();
+        else if( player_status == PLAYER_ATTACK ) attack();
     }
 
     void render(){
+        //slowing player a little
         int current_frame = frame/slow_factor[player_status];
 
-        dest.x -= gGame->camera.x;
+        //centering player on the screen
+        dest.x -= gGame->camera.x;      
         dest.y -= gGame->camera.y;
 
+        //deciding which frame in the spritesheet to render
         src.x = (current_frame % sprite_per_row[player_status]) * src.w;
         src.y = (current_frame / sprite_per_row[player_status]) * src.h;
-
+        
         SDL_RenderCopyEx( gGame->renderer, look[player_status], &src, &dest , 0.0, NULL, flip );
 
+        //reverting player to it's original location onthe whole map
         dest.x += gGame->camera.x;
         dest.y += gGame->camera.y;
     }
 
-}gPlayer(34, 4, 32, 32);//gPlayer size 32, 32
+};
 
+Player gPlayer(32, 32);//gPlayer size 32, 32, player being rendered at 34*32, 4*32 in the level
+
+//Enemy structure
 struct Enemy{
     
     enum enemy_status_list{
@@ -498,19 +587,28 @@ struct Enemy{
         ENEMY_TOTAL
     };
 
+    enum route{
+        UP_DOWN,
+        LEFT_RIGHT
+    };
+
+    //using bresenham's line drawing algorithm to find a straight line between player and enemy
     struct LineOfSight{
 
-        int dx;
-        int dy;
+        int dx; //change in x coordinate from enemy to player
+        int dy; //change in y coordinate from enemy to player
         int range;
-
+    
+        //starting point and endingpoint of the line
         SDL_Point start;
         SDL_Point end;
 
+        //checking if player is in range of enemy
         bool in_range(){
             return dx * dx + dy * dy <= range;
         }
 
+        //resetting enemy position and player position
         void reset(SDL_Point* player_center, SDL_Point* enemy_center){            
             start = *player_center;
             end = *enemy_center;
@@ -519,120 +617,182 @@ struct Enemy{
             dy = end.y - start.y;
         }
 
-        bool low_slope( SDL_Point start, SDL_Point end ){
+        bool low_slope( SDL_Point& start, SDL_Point& end ){
             if(dx < 0) {
                 dx = -dx;
                 dy = -dy;
                 return low_slope( end, start );
             }
 
-            int y_increment = gTile.tile_width;
-            int x_increment = gTile.tile_height;
+            int y_increment = 1;
+            int x_increment = 1;
             if( dy < 0 ) y_increment = -y_increment, dy = -dy;
 
             int decision_factor = 2 * dy - dx;
+            
             while(start.x < end.x){
-                start.x += x_increment;
 
+                start.x += x_increment;
                 if(decision_factor > 0) start.y += y_increment, decision_factor += (2*(dy-dx));
                 else decision_factor += (2*dy);
+                
                 int tileType = gTile. tile_type [start.y/gTile.tile_height][start.x/gTile.tile_width];
-                if( (tileType == gTile.TILE_WALL) || (tileType == gTile.TILE_SLOPE) || (tileType ==gTile.TILE_GATE) ) return 0;
+                if( (tileType == gTile.TILE_WALL) || (tileType == gTile.TILE_SLOPE) ) return 0;
             }
             return 1;
         }
 
-        bool hi_slope( SDL_Point start, SDL_Point end ){
+        bool hi_slope( SDL_Point& start, SDL_Point& end ){
             if( dy < 0 ) {
                 dx = -dx;
                 dy = -dy;
                 return hi_slope( end, start );
             }
-
-            int x_increment = gTile.tile_height;
-            int y_increment = gTile.tile_width;
+            int x_increment = 1;
+            int y_increment = 1;
             if( dx < 0 ) x_increment = -x_increment, dx = -dx;
-
             int decision_factor = 2 * dx - dy;
+
+            
             while(start.y < end.y){
                 start.y += y_increment;
 
                 if(decision_factor > 0) start.x += x_increment, decision_factor += (2*(dx-dy));
                 else decision_factor += (2*dx);
+                
 
                 int tileType = gTile. tile_type [start.y/gTile.tile_height][start.x/gTile.tile_width];
-                if( (tileType == gTile.TILE_WALL) || (tileType == gTile.TILE_SLOPE) || (tileType ==gTile.TILE_GATE) ) return 0;
+                if( (tileType == gTile.TILE_WALL) || (tileType == gTile.TILE_SLOPE) ) return 0;
             }
             return 1;
         }
-
-        bool line() {
+    
+        //returns 1 if it could establish an uninturrepted line between enemy and player
+        bool established() {
             if( dx * dx + dy * dy > range ) return 0;
             if( abs(dy) > abs(dx) ) return  hi_slope( start, end);
             else return low_slope( start, end );
         }
     };
 
-    int originX;
-    int originY;
-    int xVel;
+    int originX;                        //origin where enemy was spawned. Enemy can move a little about this point
+    int originY;    
+    int route_length;                   //maximum displacenemt of enemy from spawn
+    int xVel;                           //displacement of enemy per loop when its patrolling
     int yVel;
-    bool route;
-    int enemy_status;
-    int frame;
-    int slow_factor;
-    int route_length;
-    int sprites_per_row;
-    int sprites_per_col;
-    int attack_range;
+    int vel;
+    int enemy_status;                   //whether enemy is attacking
+    int frame;                          //frame of enemy to be renderer
+    int slow_factor[ENEMY_TOTAL];       //slowing enemy a little
+    int sprites_per_row[ENEMY_TOTAL];   //enemy has different amount of sprites in each of it's spritesheet 
+    int sprites_per_col[ENEMY_TOTAL];
 
-    SDL_Texture* look;
-    SDL_Rect src;
-    SDL_Rect dest;
-    SDL_RendererFlip flip;
-    SDL_Point enemy_center;
-    LineOfSight line_of_sight;
+    Uint32 attack_range;                //range for enemy's attack
+    Uint32 attack_delay;                //delay between two attacks
 
-    Enemy(SDL_Rect dimensions, bool route){
+    int projectile_vel;                 //magnitude of projectile's velocity vector
+    double projectile_xVel;             //displacement of projectile per loop when launched
+    double projectile_yVel;
+    double projectile_angle;            //angle by which projectile rotates
+    
+    bool projectile_launched;           //whether enemy already launched a projectile
 
-        src = { 0, 0, dimensions.w, dimensions.h };
-        dest = { dimensions.x*dimensions.w, dimensions.y*dimensions.h, dimensions.w, dimensions.h };
-        originX = dimensions.x * dimensions.w;
-        originY = dimensions.y * dimensions.h;
-        enemy_center = {dimensions.x*dimensions.w + dimensions.w/2, dimensions.y*dimensions.h + dimensions.h / 2};
+    SDL_Texture* look[ENEMY_TOTAL];     //different textures for different enemy status. attack patrol etc.
+    SDL_Texture* projectile;            //texture for projectile. Enemy launches it's weapon
+    SDL_Rect src;                       //source rectangle from the spritesheer
+    SDL_Rect dest;                      //destination rectangle in the map
+    SDL_Rect projectile_dest;           //destination rectangle in the map for projectile
+    SDL_RendererFlip flip;              //enemy faces left when it's going/attacking to the left
+    SDL_Point enemy_center;             //enemy's body center. Used for establishing line of sight
+    SDL_Point projectile_center;        //Center of projectile. Obsolete. Don't delete
+    LineOfSight line_of_sight;          
 
-        xVel = route*2;
-        yVel = !route*2;
+    Enemy( int w, int h ){
+
+        src = { 0, 0, w, h };
+        dest = { 0, 0, w, h };
+        projectile_dest = { 0, 0, 24, 8 };
+
         frame = 0;
-        slow_factor = 6;
+        vel = 2;
+        slow_factor[ENEMY_PATROL] = 6;
+        slow_factor[ENEMY_ATTACK] = 6;
         route_length = 120;
-        sprites_per_row = 6;
-        sprites_per_col = 3;
+        sprites_per_row[ENEMY_PATROL] = 6;
+        sprites_per_col[ENEMY_PATROL] = 3;
+        sprites_per_row[ENEMY_ATTACK] = 6;
+        sprites_per_col[ENEMY_ATTACK] = 2;
         attack_range = 180;
+        attack_delay = 4000;
+
+        projectile_launched = false;
+        projectile_vel = 2;
+        projectile_xVel = 0.0;
+        projectile_yVel = 0.0;
+        projectile_angle = 0.0;
 
         line_of_sight.range = attack_range * attack_range;
         enemy_status = ENEMY_PATROL;
         flip = SDL_FLIP_NONE;
-        look = NULL;
+        for(int i=0; i<ENEMY_TOTAL; i++) look[i] = NULL;
     }
     ~Enemy(){
-        SDL_DestroyTexture( look );
-        look = NULL;
+        for(int i=0; i<ENEMY_TOTAL; i++) {
+            SDL_DestroyTexture( look[i] );
+            look[i] = NULL;
+        }
     }
 
-    void loadFromFile( std::string path ){
-        SDL_Surface* tempImage = IMG_Load( path.c_str() );
+    //loading all the textures for enemy
+    void loadFromFile( std::string walk_path, std::string attack_path, std::string weapon_path ){
+        SDL_Surface* tempImage = IMG_Load( walk_path.c_str() );
         if(tempImage == NULL) error_i;
 
-        look = SDL_CreateTextureFromSurface( gGame->renderer, tempImage );
-        if( look ) printf("Enemy Texture was loaded from \"%s\"\n", path.c_str());
+        look[ENEMY_PATROL] = SDL_CreateTextureFromSurface( gGame->renderer, tempImage );
+        if( look[ENEMY_PATROL] ) printf("Enemy patrol Texture was loaded from \"%s\"\n", walk_path.c_str());
+        else error;
+        tempImage = NULL;
+
+    
+        tempImage = IMG_Load( attack_path.c_str() );
+        if(tempImage == NULL) error_i;
+
+        look[ENEMY_ATTACK] = SDL_CreateTextureFromSurface( gGame->renderer, tempImage );
+        if( look[ENEMY_ATTACK] ) printf("Enemy attack Texture was loaded from \"%s\"\n", attack_path.c_str());
+        else error;
+        tempImage = NULL;
+    
+        tempImage = IMG_Load( weapon_path.c_str() );
+        if(tempImage == NULL) error_i;
+
+        projectile = SDL_CreateTextureFromSurface( gGame->renderer, tempImage );
+        if( projectile ) printf("Enemy weapon was loaded from \"%s\"\n", weapon_path.c_str());
         else error;
 
         SDL_FreeSurface( tempImage );
         tempImage = NULL;
     }
 
+    //setting player spawn point
+    void set_spawn( int x, int y ){
+        originX = x * dest.w;
+        originY = y * dest.h;
+
+        enemy_center = {x * dest.w + dest.w/2, y * dest.h + dest.h / 2};
+
+        dest.x = originX;
+        dest.y = originY;
+    }
+
+    //setting player patrol route. LEFT_RIGHT if along x axis, TOP_BOTTOM if alongy axis
+    void set_route( bool route ){
+        xVel = route * vel;
+        yVel = !route * vel;
+    }
+
     void move(){
+        //moving projectile when enemy is in move stance
+        if( projectile_launched ) move_projectile();
 
         dest.x += xVel;
         if(dest.x<0 || dest.x + dest.w > gGame->SCREEN_WIDTH || gTile.tile_gate_wall_collission(&dest, 0) || dest.x == originX + route_length || dest.x == originX) xVel = -xVel;
@@ -645,34 +805,133 @@ struct Enemy{
         if(xVel > 0) flip = SDL_FLIP_NONE;
         if(xVel < 0) flip = SDL_FLIP_HORIZONTAL;
         frame++;
-        frame %= (sprites_per_row*sprites_per_col*slow_factor);
+        frame %= (sprites_per_row[enemy_status]*sprites_per_col[enemy_status]*slow_factor[enemy_status]);
+
+        //of projectile is not launched, projectile is on the enemy body
+        if(!projectile_launched)
+            projectile_dest.x = dest.x,
+            projectile_dest.y = dest.y;
     }
 
-    void handle_event(){
+    //makes projectile leave enemy body and go for the player
+    void launch_projectile(){
+        projectile_launched = true;
+        projectile_center = enemy_center;
+        const int dy = gPlayer.player_center.y - enemy_center.y;
+        const int dx = gPlayer.player_center.x - enemy_center.x;
+        double component_factor = atan( (double)abs(dy) / (double)abs(dx) );
 
+        projectile_xVel = (dx>0?1.0:-1.0) * (double) projectile_vel * cos( component_factor );
+        projectile_yVel = (dy>0?1.0:-1.0) * (double) projectile_vel * sin( component_factor );
+    }
+
+    //once projectile is launched, moves projectile towards plater
+    void move_projectile(){
+        static double projectile_xPos = 0;
+        static double projectile_yPos = 0;
+        
+        projectile_center.x -= (int)projectile_xPos;
+        projectile_xPos += projectile_xVel;
+
+        projectile_center.y -= (int)projectile_yPos;
+        projectile_yPos += projectile_yVel;
+
+        projectile_angle += 20;
+        if( projectile_angle >= 360.0 ) projectile_angle = 0;
+
+        //if projectile has already travelled it's attack distance, it teleports back to enemybody
+        if( (int)projectile_xPos *(int)projectile_xPos + (int)projectile_yPos * (int)projectile_yPos > attack_range * attack_range ){
+            projectile_launched = false;
+            projectile_xPos = 0;
+            projectile_yPos = 0;
+            return;
+        }
+
+        projectile_center.x += (int)projectile_xPos;
+        projectile_center.y += (int)projectile_yPos;
+        projectile_dest.x = projectile_center.x - projectile_dest.w / 2;
+        projectile_dest.y = projectile_center.y - projectile_dest.h / 2;
+
+        //if projectile collides with player, player will soon get damaged. Work in Progress
+        if( gPlayer.rect_collission( projectile_dest ) ){
+
+            gPlayer.get_damaged();
+
+            projectile_launched = false;
+            projectile_xPos = 0;
+            projectile_yPos = 0;
+            return;
+        }
+        //if projectile collides with wall, it teleports back to enemy body
+        else if( gTile.tile_gate_wall_collission( &projectile_dest, 0 ) ){
+            projectile_launched = false;
+            projectile_xPos = 0;
+            projectile_yPos = 0;
+            return;
+        }
+    }
+
+    //player attack stance
+    void attack(){
+        static Uint32 start = SDL_GetTicks() - attack_delay;
+
+        //launches a projectile after attack delay
+        if(SDL_GetTicks() - start > attack_delay) launch_projectile(), start = SDL_GetTicks(), frame = 0;
+
+        //moving projectile when player is in attack stance
+        if( projectile_launched ) move_projectile();
+        if(frame >= 0) frame++;
+        if(frame >= (sprites_per_row[enemy_status]*sprites_per_col[enemy_status]*slow_factor[enemy_status])) frame = -1;
+    }
+
+    //enemy responding to player events. 
+    void handle_event(){
+        
+        //resetting points to establish line of sight each time player or enemy moves
         line_of_sight.reset( &gPlayer.player_center, &enemy_center );
 
-        if( line_of_sight.line() ) enemy_status = ENEMY_ATTACK;
-        else enemy_status = ENEMY_PATROL;
+        //checks if it could establish a line of sight. Changes stance to attack if it could
+        if( line_of_sight.established() ) {
+            if(enemy_status == ENEMY_PATROL) frame = 0;
+
+            flip = enemy_center.x-gPlayer.player_center.x<0?SDL_FLIP_NONE:SDL_FLIP_HORIZONTAL;
+
+            enemy_status = ENEMY_ATTACK;
+        }
+        else {  //else continues patrolling it's route
+            if(enemy_status == ENEMY_ATTACK) frame = 0;
+            enemy_status = ENEMY_PATROL;
+        }
 
         if( enemy_status == ENEMY_PATROL ) move();
+        else if( enemy_status == ENEMY_ATTACK ) attack();
     }
 
+    //rendering enemy based on camera. Enemy will always be rendered no matter where camera is;
     void render( SDL_Rect& camera ){
 
-        int current_frame = frame/slow_factor;
-        src.x = (current_frame % sprites_per_row) * src.w;
-        src.y = (current_frame / sprites_per_row) * src.h;
+        int current_frame = frame/slow_factor[enemy_status];
+        src.x = (current_frame % sprites_per_row[enemy_status]) * src.w;
+        src.y = (current_frame / sprites_per_row[enemy_status]) * src.h;
 
         int translateX = camera.x;
         int translateY = camera.y;
 
+        //rendering enemy it it's own patrol route, even if not in camera range
         dest.x -= translateX;
         dest.y -= translateY;
+        projectile_dest.x -= translateX;
+        projectile_dest.y -= translateY;
 
-        SDL_RenderCopyEx( gGame->renderer, look, &src, &dest, 0.0, NULL, flip );
+        SDL_RenderCopyEx( gGame->renderer, look[enemy_status], &src, &dest, 0.0, NULL, flip );
+        if( projectile_launched )   //if projectile is launched, renders projectile
+            SDL_RenderCopyEx( gGame->renderer, projectile, NULL, &projectile_dest, projectile_angle, NULL, SDL_FLIP_NONE );
 
         dest.x += translateX;
         dest.y += translateY;
+        projectile_dest.x += translateX;
+        projectile_dest.y += translateY;
     }
-} gEnemy_one_lr({26, 24, 32, 32}, 1);
+};
+
+Enemy gEnemy_one_lr( 32, 32 );//enemy is 32x32px in size
