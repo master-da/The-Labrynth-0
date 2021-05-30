@@ -118,6 +118,10 @@ struct Game {
         if (camera.y + camera.h > SCREEN_HEIGHT) camera.y = SCREEN_HEIGHT - camera.h;
     }
 
+    void event_handler(SDL_Event e){
+        
+    }
+
     void close() {
         SDL_DestroyWindow(window);
         window = NULL;
@@ -442,16 +446,19 @@ struct Player {
 
     bool attacking;  //player can't move if it is in attack animation
 
+    Tile* tile;
+
     SDL_Texture* look[PLAYER_TOTAL_STATI];  //look is player's texture. differnt spritesheet for walking attacking etc
     SDL_Rect src;                           //source rectangle from the spritesheet
     SDL_Rect dest;                          //destination rentangle in the map
     SDL_Point player_center;                //center of player's body. need it for line of sight
 
-    Player(int w, int h) {
+    Player(int w, int h, Tile* inpTile) {
         xVel = 0;
         yVel = 0;
         frame = 0;
         attacking = 0;
+        tile = inpTile;
 
         slow_factor[PLAYER_IDLE] = 7;
         slow_factor[PLAYER_MOVE] = 4;
@@ -533,16 +540,16 @@ struct Player {
         player_center = {x * dest.w + dest.w / 2, y * dest.h + dest.h / 2};
     }
 
-    //moving player based on input
+    //moving player based on input.
     void move() {
         frame++;
         frame %= (sprite_per_row[PLAYER_MOVE] * sprite_per_col[PLAYER_MOVE] * slow_factor[PLAYER_MOVE]);
 
         dest.x += xVel;
-        if (dest.x < 0 || dest.x + dest.w > gGame->SCREEN_WIDTH || gTile.tile_gate_wall_collission(&dest, 7)) dest.x -= xVel;
+        if (dest.x < 0 || dest.x + dest.w > gGame->SCREEN_WIDTH || tile->tile_gate_wall_collission(&dest, 7)) dest.x -= xVel;
 
         dest.y += yVel;
-        if (dest.y < 0 || dest.y + dest.h > gGame->SCREEN_HEIGHT || gTile.tile_gate_wall_collission(&dest, 7)) dest.y -= yVel;
+        if (dest.y < 0 || dest.y + dest.h > gGame->SCREEN_HEIGHT || tile->tile_gate_wall_collission(&dest, 7)) dest.y -= yVel;
 
         player_center.x = dest.x + dest.w / 2;
         player_center.y = dest.y + dest.h / 2;
@@ -562,35 +569,35 @@ struct Player {
         if (frame >= (sprite_per_row[PLAYER_ATTACK] * sprite_per_col[PLAYER_ATTACK] * slow_factor[PLAYER_ATTACK])) frame = 0, player_status = PLAYER_IDLE, attacking = false;
     }
 
-    //handles players actions based on human input. Takes argument SDL_Event
+    //handles players actions based on human input. Takes argument SDL_Event to check human activity. And tile pointer to check button activity
     void event_handler(SDL_Event& e) {
         static bool keyUpCheck = false;  //will only check for SDL_KEYUP if we already have had the event SDL_KEYDOWN
 
-        if (!attacking && e.type == SDL_KEYDOWN && !e.key.repeat) {
+        if (player_status < PLAYER_ATTACK && e.type == SDL_KEYDOWN && !e.key.repeat) {
             if (e.key.keysym.sym == SDLK_w) yVel = -6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
             if (e.key.keysym.sym == SDLK_s) yVel = 6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
             if (e.key.keysym.sym == SDLK_a) xVel = -6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true, flip = SDL_FLIP_HORIZONTAL;
             if (e.key.keysym.sym == SDLK_d) xVel = 6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true, flip = SDL_FLIP_NONE;
 
             if (e.key.keysym.sym == SDLK_e) {
-                int tile_button_collission = gTile.tile_button_collission(&dest);
+                int tile_button_collission = tile->tile_button_collission(&dest);
 
                 //if player collides with a switch and pressed e, corresponding gate will open
                 if (tile_button_collission) {
-                    while (gTile.par[tile_button_collission].cnt) {
-                        gTile.par[tile_button_collission].cnt--;
-                        int gate_row = gTile.par[tile_button_collission].gate_row[gTile.par[tile_button_collission].cnt];
-                        int gate_col = gTile.par[tile_button_collission].gate_col[gTile.par[tile_button_collission].cnt];
-                        gTile.tile_type[gate_row][gate_col] = gTile.TILE_WALK;
+                    while (tile->par[tile_button_collission].cnt) {
+                        tile->par[tile_button_collission].cnt--;
+                        int gate_row = tile->par[tile_button_collission].gate_row[tile->par[tile_button_collission].cnt];
+                        int gate_col = tile->par[tile_button_collission].gate_col[tile->par[tile_button_collission].cnt];
+                        tile->tile_type[gate_row][gate_col] = tile->TILE_WALK;
                     }
                 }
             }
         }
 
-        //player can't move if it's in attack animation. Therefore the !attacking condition
-        else if (!attacking && e.type == SDL_KEYUP && keyUpCheck)
+        //player can't move if it's not idle or moving alreadt. Therefore the < PLAYER_ATTACK condition
+        else if (player_status < PLAYER_ATTACK && e.type == SDL_KEYUP && keyUpCheck)
             xVel = yVel = 0, player_status = PLAYER_IDLE, frame = 0, keyUpCheck = false;
-        else if (!attacking && e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT)
+        else if (player_status < PLAYER_ATTACK && e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT)
             player_status = PLAYER_ATTACK, frame = 0, attacking = true;
 
         if (player_status == PLAYER_IDLE)
@@ -621,7 +628,7 @@ struct Player {
     }
 };
 
-Player gPlayer(32, 32);  //gPlayer size 32, 32, player being rendered at 34*32, 4*32 in the level
+Player gPlayer(32, 32, &gTile);  //gPlayer size 32, 32, player being rendered at 34*32, 4*32 in the level
 
 //Enemy structure
 struct Enemy {
@@ -636,6 +643,9 @@ struct Enemy {
         LEFT_RIGHT
     };
 
+    Player* player;
+    Tile* tile;
+
     //using bresenham's line drawing algorithm to find a straight line between player and enemy
     struct LineOfSight {
         int dx;  //change in x coordinate from enemy to player
@@ -645,6 +655,12 @@ struct Enemy {
         //starting point and endingpoint of the line
         SDL_Point start;
         SDL_Point end;
+
+        Tile* tile;
+
+        LineOfSight(){
+            tile = NULL;
+        }
 
         //checking if player is in range of enemy
         bool in_range() {
@@ -680,8 +696,8 @@ struct Enemy {
                 else
                     decision_factor += (2 * dy);
 
-                int tileType = gTile.tile_type[start.y / gTile.tile_height][start.x / gTile.tile_width];
-                if ((tileType == gTile.TILE_WALL) || (tileType == gTile.TILE_SLOPE)) return 0;
+                int tileType = tile->tile_type[start.y / tile->tile_height][start.x / tile->tile_width];
+                if ((tileType == tile->TILE_WALL) || (tileType == tile->TILE_SLOPE)) return 0;
             }
             return 1;
         }
@@ -705,8 +721,8 @@ struct Enemy {
                 else
                     decision_factor += (2 * dx);
 
-                int tileType = gTile.tile_type[start.y / gTile.tile_height][start.x / gTile.tile_width];
-                if ((tileType == gTile.TILE_WALL) || (tileType == gTile.TILE_SLOPE)) return 0;
+                int tileType = tile->tile_type[start.y / tile->tile_height][start.x / tile->tile_width];
+                if ((tileType == tile->TILE_WALL) || (tileType == tile->TILE_SLOPE)) return 0;
             }
             return 1;
         }
@@ -753,7 +769,11 @@ struct Enemy {
     SDL_Point projectile_center;     //Center of projectile. Obsolete. Don't delete
     LineOfSight line_of_sight;
 
-    Enemy(int w, int h) {
+    Enemy(int w, int h, Player* inpPlayer, Tile* inpTile) {
+        player = inpPlayer;
+        tile = inpTile;
+        line_of_sight.tile = inpTile;
+
         src = {0, 0, w, h};
         dest = {0, 0, w, h};
         projectile_dest = {0, 0, 24, 8};
@@ -840,15 +860,17 @@ struct Enemy {
         yVel = !route * vel;
     }
 
+    //moving projectile when enemy is in move stance
     void move() {
-        //moving projectile when enemy is in move stance
         if (projectile_launched) move_projectile();
 
         dest.x += xVel;
-        if (dest.x < 0 || dest.x + dest.w > gGame->SCREEN_WIDTH || gTile.tile_gate_wall_collission(&dest, 0) || dest.x == originX + route_length || dest.x == originX) xVel = -xVel;
+        if (dest.x < 0 || dest.x + dest.w > gGame->SCREEN_WIDTH || tile->tile_gate_wall_collission(&dest, 0) || dest.x == originX + route_length || dest.x == originX) 
+            xVel = -xVel;
 
         dest.y += yVel;
-        if (dest.y < 0 || dest.y + dest.h > gGame->SCREEN_HEIGHT || gTile.tile_gate_wall_collission(&dest, 0) || dest.y == originY + route_length || dest.y == originY) yVel = -yVel;
+        if (dest.y < 0 || dest.y + dest.h > gGame->SCREEN_HEIGHT || tile->tile_gate_wall_collission(&dest, 0) || dest.y == originY + route_length || dest.y == originY) 
+            yVel = -yVel;
 
         enemy_center = {dest.x + dest.w / 2, dest.y + dest.h / 2};
 
@@ -863,19 +885,19 @@ struct Enemy {
             projectile_dest.y = dest.y;
     }
 
-    //makes projectile leave enemy body and go for the player
+    //makes projectile leave enemy body and go for the player. Takes player's pointer as argument
     void launch_projectile() {
         projectile_launched = true;
         projectile_center = enemy_center;
-        const int dy = gPlayer.player_center.y - enemy_center.y;
-        const int dx = gPlayer.player_center.x - enemy_center.x;
+        const int dy = player->player_center.y - enemy_center.y;
+        const int dx = player->player_center.x - enemy_center.x;
         double component_factor = atan((double)abs(dy) / (double)abs(dx));
 
         projectile_xVel = (dx > 0 ? 1.0 : -1.0) * (double)projectile_vel * cos(component_factor);
         projectile_yVel = (dy > 0 ? 1.0 : -1.0) * (double)projectile_vel * sin(component_factor);
     }
 
-    //once projectile is launched, moves projectile towards plater
+    //once projectile is launched, moves projectile towards plater. Takes tile pointer as argument to check wall collission and player pointer to check player collsiion
     void move_projectile() {
         static double projectile_xPos = 0;
         static double projectile_yPos = 0;
@@ -903,8 +925,8 @@ struct Enemy {
         projectile_dest.y = projectile_center.y - projectile_dest.h / 2;
 
         //if projectile collides with player, player will soon get damaged. Work in Progress
-        if (gPlayer.rect_collission(projectile_dest)) {
-            gPlayer.get_damaged();
+        if (player->rect_collission(projectile_dest)) {
+            player->get_damaged();
 
             projectile_launched = false;
             projectile_xPos = 0;
@@ -912,7 +934,7 @@ struct Enemy {
             return;
         }
         //if projectile collides with wall, it teleports back to enemy body
-        else if (gTile.tile_gate_wall_collission(&projectile_dest, 0)) {
+        else if (tile->tile_gate_wall_collission(&projectile_dest, 0)) {
             projectile_launched = false;
             projectile_xPos = 0;
             projectile_yPos = 0;
@@ -936,13 +958,13 @@ struct Enemy {
     //enemy responding to player events.
     void handle_event() {
         //resetting points to establish line of sight each time player or enemy moves
-        line_of_sight.reset(&gPlayer.player_center, &enemy_center);
+        line_of_sight.reset(&player->player_center, &enemy_center);
 
         //checks if it could establish a line of sight. Changes stance to attack if it could
         if (line_of_sight.established()) {
             if (enemy_status == ENEMY_PATROL) frame = 0;
 
-            flip = enemy_center.x - gPlayer.player_center.x < 0 ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL;
+            flip = enemy_center.x - player->player_center.x < 0 ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL;
 
             enemy_status = ENEMY_ATTACK;
         } else {  //else continues patrolling it's route
@@ -982,5 +1004,5 @@ struct Enemy {
     }
 };
 
-Enemy gEnemy_one(32, 32);  //enemy is 32x32px in size
-Enemy gEnemy_two(32, 32);  //enemy is 32x32px in size
+Enemy gEnemy_one(32, 32, &gPlayer, &gTile);  //enemy is 32x32px in size
+Enemy gEnemy_two(32, 32, &gPlayer, &gTile);  //enemy is 32x32px in size
