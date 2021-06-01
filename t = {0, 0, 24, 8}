@@ -1,0 +1,83 @@
+[33mcommit 53133a50bfd0f0aee66afe2d48251fa388df6bc9[m[33m ([m[1;36mHEAD -> [m[1;32mNoki[m[33m, [m[1;32mfilesystem[m[33m)[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Tue Jun 1 12:50:48 2021 +0600
+
+    entities can now attack each other
+
+[33mcommit 19686124c46d3b38646c001c370fb54105927a94[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Sun May 30 21:06:21 2021 +0600
+
+    is module
+
+[33mcommit 2aebf1161b14ef52532a406298579f49e2b3706b[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Sun May 30 19:10:00 2021 +0600
+
+    minor
+
+[33mcommit 7c62d5c7bdfdcabd94dfe2883655797480697471[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Sun May 30 19:08:49 2021 +0600
+
+    minor
+
+[33mcommit d0012a5e84f2962550c1f2ae01a7ff50c168db07[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Wed May 26 00:30:04 2021 +0600
+
+    enemy is now moving and everything
+
+[33mcommit c8ecd421e594dc39c2873e0d65d1d73de9d60605[m[33m ([m[1;31morigin/Noki[m[33m)[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Wed May 26 00:29:12 2021 +0600
+
+    Enemy is now attacking and everything
+
+[33mcommit c6bd3b56c022b7766c0a4745ed378bc8881748ff[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Mon May 24 14:02:28 2021 +0600
+
+    moving on to make throw animation
+
+[33mcommit a7c48a06af79354079de0c136d31947650b8a16a[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Sun May 23 18:31:59 2021 +0600
+
+    enemy now has some line of sight
+
+[33mcommit 24eb147fcf254c8479e9d9c24d2217db53b33019[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Sun May 23 11:31:20 2021 +0600
+
+    player-and-enemy-no-attack
+
+[33mcommit 02ba0a4df18a0d71e26bc3fcfff89902d1e901ca[m
+Author: master-da <master_da@DESKTOP-QV1BRPG.localdomain>
+Date:   Wed May 5 12:40:43 2021 +0600
+
+    forgot to commit earlier. Just stting up buttons and all
+
+[33mcommit 03a60fe034d37f6fa74e643c0d26e55cb06d80d5[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Fri Apr 23 13:54:48 2021 +0600
+
+    slightly chandeg my macros :3
+
+[33mcommit 44fd3a1626d3822fcf4e5fcb64d051fb91412642[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Fri Apr 23 13:47:34 2021 +0600
+
+    eh
+
+[33mcommit 409a428bb43264c1498c7de6607350d75e8db7d0[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Wed Apr 21 12:39:02 2021 +0600
+
+    creating base
+
+[33mcommit e772336f2e87834fb6fdddf152d8bba38f2f962e[m
+Author: master-da <mdnokib2000@gmail.com>
+Date:   Wed Apr 21 12:29:15 2021 +0600
+
+    Initial commit

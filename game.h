@@ -12,6 +12,9 @@ struct Game {
 
     Sint32 player_damaged = 44;
     Sint32 enemy_damaged = 45;
+    Sint32 event_rubbish = 2;
+
+    
 
     enum screens {
         UI_SCREEN,

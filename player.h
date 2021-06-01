@@ -62,7 +62,7 @@ struct Player {
         slow_factor[PLAYER_IDLE] = 7;
         slow_factor[PLAYER_MOVE] = 4;
         slow_factor[PLAYER_ATTACK] = 4;
-        slow_factor[PLAYER_HURT] = 2;
+        slow_factor[PLAYER_HURT] = 4;
         slow_factor[PLAYER_DYING] = 4;
 
         sprite_per_row[PLAYER_IDLE] = 6;
@@ -285,7 +285,7 @@ struct Player {
 
             player_status = PLAYER_HURT, frame = 0;
             e.user.code = 2;
-            // stats->hit_points -= *((int*)e.user.data1);
+            stats->hit_points -= *((int*)e.user.data1);
             if (stats->hit_points <= 0) player_status = PLAYER_DYING;
             
         }
