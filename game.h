@@ -3,19 +3,7 @@
 #include "init.h"
 
 struct Game {
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    SDL_Rect camera;
-    int SCREEN_WIDTH, SCREEN_HEIGHT;  //dimensions of the total level. LEVEL_WIDHT would make more sense i understand
-    int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
-    int current_screen;
-
-    Sint32 player_damaged = 44;
-    Sint32 enemy_damaged = 45;
-    Sint32 event_rubbish = 2;
-
     
-
     enum screens {
         UI_SCREEN,
         START_SCREEN,
@@ -34,6 +22,24 @@ struct Game {
         BUTTON_BACK
     };
 
+    struct Events{
+        Sint32 player_damaged;
+        Sint32 enemy_damaged;
+        Sint32 reset_event;
+        
+        void reset(SDL_Event& e){
+            e.user.code = reset_event;
+        }
+    };
+
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    Events event;
+    SDL_Rect camera;
+    int SCREEN_WIDTH, SCREEN_HEIGHT;  //dimensions of the total level. LEVEL_WIDHT would make more sense i understand
+    int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
+    int current_screen;     
+
     Game(int width, int height) {
         window = NULL;
         renderer = NULL;
@@ -42,6 +48,11 @@ struct Game {
         RENDER_WIDTH = 800;
         RENDER_HEIGHT = 600;
         camera = {0, 0, RENDER_WIDTH, RENDER_HEIGHT};  //SDL_Rect camera now know what part to render
+
+        event.player_damaged = 44;
+        event.enemy_damaged = 45;
+        event.reset_event = 2;
+
         current_screen = LEVEL_1;
     }
     ~Game() {

@@ -21,7 +21,6 @@ int main(int argc, char* argv[]) {
     Enemy* enemy_one = new Enemy(32, 32, game, tile, player);
     Enemy* enemy_two = new Enemy(32, 32, game, tile, player);
 
-
     game->init("a", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0);
     SDL_Event e;
     bool quit = false;
@@ -34,7 +33,7 @@ int main(int argc, char* argv[]) {
 
     enemy_two->set_spawn(17, 21);
     enemy_two->set_route(enemy_two->LEFT_RIGHT);
-
+    
     while (!quit) {
         SDL_PollEvent(&e);
         if (e.type == SDL_QUIT) quit = 1;

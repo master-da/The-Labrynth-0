@@ -19,24 +19,26 @@ struct Player {
         int defence;
         int attack_damage;
         int attack_radius;
+        int xVel;
+        int yVel;
 
         Player_stats() {
             hit_points = 20;
             defence = 10;
             attack_damage = 15;
             attack_radius = 24;
+            xVel = 0;
+            yVel = 0;
         }
     };
 
-    int xVel, yVel;                       //amout of pixels player displaces by every time it moves
+
+
+    
     int frame;                            //the sprite from the spritesheet that will be renderer
-    int slow_factor[PLAYER_TOTAL_STATI];  //player being slowed a little
-
-    SDL_RendererFlip flip;
-
-    //walk, attack, idle -each sprite sheet has different numbers of sprites per row and column
-    int sprite_per_row[PLAYER_TOTAL_STATI];
+    int sprite_per_row[PLAYER_TOTAL_STATI];//walk, attack, idle -each sprite sheet has different numbers of sprites per row and column
     int sprite_per_col[PLAYER_TOTAL_STATI];
+    int slow_factor[PLAYER_TOTAL_STATI];  //player being slowed a little
     int player_status;  //knows if the player is idle, walking or attacking
 
     bool dead;  //player can't move if it is in attack animation
@@ -48,12 +50,10 @@ struct Player {
     SDL_Texture* look[PLAYER_TOTAL_STATI];  //look is player's texture. differnt spritesheet for walking attacking etc
     SDL_Rect src;                           //source rectangle from the spritesheet
     SDL_Rect dest;                          //destination rentangle in the map
+    SDL_RendererFlip flip;
     SDL_Point player_center;                //center of player's body. need it for line of sight
-    Sint32 enemy_damage_event_code;
 
     Player(int w, int h, Game* inpGame, Tile* inpTile) {
-        xVel = 0;
-        yVel = 0;
         frame = 0;
         dead = false;
         tile = inpTile;
@@ -80,12 +80,11 @@ struct Player {
 
         dest = {0, 0, w, h};
         src = {0, 0, w, h};
-        enemy_damage_event_code = 420;
 
         flip = SDL_FLIP_NONE;
     }
     ~Player() {
-        xVel = yVel = 0;
+        stats->xVel = stats->yVel = 0;
     }
 
     //loading all the player sprites
@@ -198,11 +197,11 @@ struct Player {
         frame++;
         frame %= (sprite_per_row[PLAYER_MOVE] * sprite_per_col[PLAYER_MOVE] * slow_factor[PLAYER_MOVE]);
 
-        dest.x += xVel;
-        if (dest.x < 0 || dest.x + dest.w > game->SCREEN_WIDTH || tile->tile_gate_wall_collission(&dest, 7)) dest.x -= xVel;
+        dest.x += stats->xVel;
+        if (dest.x < 0 || dest.x + dest.w > game->SCREEN_WIDTH || tile->tile_gate_wall_collission(&dest, 7)) dest.x -= stats->xVel;
 
-        dest.y += yVel;
-        if (dest.y < 0 || dest.y + dest.h > game->SCREEN_HEIGHT || tile->tile_gate_wall_collission(&dest, 7)) dest.y -= yVel;
+        dest.y += stats->yVel;
+        if (dest.y < 0 || dest.y + dest.h > game->SCREEN_HEIGHT || tile->tile_gate_wall_collission(&dest, 7)) dest.y -= stats->yVel;
 
         player_center.x = dest.x + dest.w / 2;
         player_center.y = dest.y + dest.h / 2;
@@ -222,16 +221,13 @@ struct Player {
     void attack() {
         if(!frame){
 
-            
-            // printf("here %d %d %d %d\n", attack_rect.x, attack_rect.y, attack_rect.w, attack_rect.h);
-
             SDL_Event enemy_damage_event;
             SDL_memset(&enemy_damage_event, 0, sizeof(enemy_damage_event));
             enemy_damage_event.type = SDL_RegisterEvents(1);
 
             if(enemy_damage_event.type == (Uint32)-1) error
             else {
-                enemy_damage_event.user.code = game->enemy_damaged;
+                enemy_damage_event.user.code = game->event.enemy_damaged;
                 SDL_PushEvent(&enemy_damage_event);
             }
         }
@@ -256,10 +252,10 @@ struct Player {
         static bool keyUpCheck = false;  //will only check for SDL_KEYUP if we already have had the event SDL_KEYDOWN
 
         if (player_status < PLAYER_ATTACK && e.type == SDL_KEYDOWN && !e.key.repeat) {
-            if (e.key.keysym.sym == SDLK_w) yVel = -6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
-            if (e.key.keysym.sym == SDLK_s) yVel = 6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
-            if (e.key.keysym.sym == SDLK_a) xVel = -6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true, flip = SDL_FLIP_HORIZONTAL;
-            if (e.key.keysym.sym == SDLK_d) xVel = 6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true, flip = SDL_FLIP_NONE;
+            if (e.key.keysym.sym == SDLK_w) stats->yVel = -6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
+            if (e.key.keysym.sym == SDLK_s) stats->yVel = 6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
+            if (e.key.keysym.sym == SDLK_a) stats->xVel = -6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true, flip = SDL_FLIP_HORIZONTAL;
+            if (e.key.keysym.sym == SDLK_d) stats->xVel = 6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true, flip = SDL_FLIP_NONE;
 
             if (e.key.keysym.sym == SDLK_e) {
                 int tile_button_collission = tile->tile_button_collission(&dest);
@@ -278,14 +274,14 @@ struct Player {
 
         //player can't move if it's not idle or moving alreadt. Therefore the < PLAYER_ATTACK condition
         else if (player_status < PLAYER_ATTACK && e.type == SDL_KEYUP && keyUpCheck)
-            xVel = yVel = 0, player_status = PLAYER_IDLE, frame = 0, keyUpCheck = false;
+            stats->xVel = stats->yVel = 0, player_status = PLAYER_IDLE, frame = 0, keyUpCheck = false;
         else if (player_status < PLAYER_ATTACK && e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT)
             player_status = PLAYER_ATTACK, frame = 0;
-        else if (e.user.code == game->player_damaged) {
+        else if (e.user.code == game->event.player_damaged) {
 
             player_status = PLAYER_HURT, frame = 0;
-            e.user.code = 2;
             stats->hit_points -= *((int*)e.user.data1);
+            game->event.reset(e);
             if (stats->hit_points <= 0) player_status = PLAYER_DYING;
             
         }
