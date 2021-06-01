@@ -19,6 +19,42 @@ struct Enemy {
         LEFT_RIGHT
     };
 
+    struct Stats{
+        int xVel;
+        int yVel;
+        int vel;
+        int damage;
+        int hit_point;
+        int route_length;
+        Uint32 attack_range;
+        Uint32 attack_delay;
+
+        Stats(){
+            vel = 2;
+            damage = 15;
+            hit_point = 35;
+            attack_range = 180;
+            attack_delay = 4000;
+            route_length = 120;
+        }
+    };
+
+    struct Projectile{ 
+        bool launched;
+        int vel;
+        int xVel;
+        int yVel;
+        int angle;
+
+        Projectile(){
+            launched = false;
+            vel = 2;
+            xVel = 0.0;
+            yVel = 0.0;
+            angle = 0.0;
+        }
+    }; 
+
     Game* game;
     Player* player;
     Tile* tile;
@@ -116,31 +152,16 @@ struct Enemy {
 
     int originX;  //origin where enemy was spawned. Enemy can move a little about this point
     int originY;
-    int route_length;  //maximum displacenemt of enemy from spawn
-    int xVel;          //displacement of enemy per loop when its patrolling
-    int yVel;
-    int vel;
-    int damage;
-    int hit_point;
     int enemy_status;                  //whether enemy is attacking
     int frame;                         //frame of enemy to be renderer
     int slow_factor[ENEMY_TOTAL];      //slowing enemy a little
     int sprites_per_row[ENEMY_TOTAL];  //enemy has different amount of sprites in each of it's spritesheet
     int sprites_per_col[ENEMY_TOTAL];
-
-    Uint32 attack_range;  //range for enemy's attack
-    Uint32 attack_delay;  //delay between two attacks
-
-    int projectile_vel;      //magnitude of projectile's velocity vector
-    double projectile_xVel;  //displacement of projectile per loop when launched
-    double projectile_yVel;
-    double projectile_angle;  //angle by which projectile rotates
-
-    bool projectile_launched;  //whether enemy already launched a projectile
+    
     bool dead;
 
     SDL_Texture* look[ENEMY_TOTAL];  //different textures for different enemy status. attack patrol etc.
-    SDL_Texture* projectile;         //texture for projectile. Enemy launches it's weapon
+    SDL_Texture* projectile_look;         //texture for projectile. Enemy launches it's weapon
     SDL_Rect src;                    //source rectangle from the spritesheer
     SDL_Rect dest;                   //destination rectangle in the map
     SDL_Rect projectile_dest;        //destination rectangle in the map for projectile
@@ -150,6 +171,8 @@ struct Enemy {
     Sint32 player_damage_event_code;
 
     LineOfSight line_of_sight;
+    Stats* stats = new Stats;
+    Projectile* projectile = new Projectile;
 
     Enemy(int w, int h, Game* inpGame, Tile* inpTile, Player* inpPlayer) {
         player = inpPlayer;
@@ -164,14 +187,11 @@ struct Enemy {
 
         dead = false;
         frame = 0;
-        vel = 2;
-        damage = 15;
-        hit_point = 35;
         slow_factor[ENEMY_PATROL] = 6;
         slow_factor[ENEMY_ATTACK] = 6;
         slow_factor[ENEMY_HURT] = 4;
         slow_factor[ENEMY_DYING] = 3;
-        route_length = 120;
+
         sprites_per_row[ENEMY_PATROL] = 6;
         sprites_per_col[ENEMY_PATROL] = 3;
         sprites_per_row[ENEMY_ATTACK] = 6;
@@ -180,16 +200,10 @@ struct Enemy {
         sprites_per_col[ENEMY_HURT] = 2;
         sprites_per_row[ENEMY_DYING] = 5;
         sprites_per_col[ENEMY_DYING] = 3;
-        attack_range = 180;
-        attack_delay = 4000;
 
-        projectile_launched = false;
-        projectile_vel = 2;
-        projectile_xVel = 0.0;
-        projectile_yVel = 0.0;
-        projectile_angle = 0.0;
+        
 
-        line_of_sight.range = attack_range * attack_range;
+        line_of_sight.range = stats->attack_range * stats->attack_range;
         enemy_status = ENEMY_PATROL;
         flip = SDL_FLIP_NONE;
         for (int i = 0; i < ENEMY_TOTAL; i++) look[i] = NULL;
@@ -247,7 +261,7 @@ struct Enemy {
         tempImage = IMG_Load(weapon_path.c_str());
         if (tempImage == NULL) error_i;
 
-        projectile = SDL_CreateTextureFromSurface(game->renderer, tempImage);
+        projectile_look = SDL_CreateTextureFromSurface(game->renderer, tempImage);
         if (projectile)
             printf("Enemy weapon was loaded from \"%s\"\n", weapon_path.c_str());
         else
@@ -270,8 +284,8 @@ struct Enemy {
 
     //setting player patrol route. LEFT_RIGHT if along x axis, TOP_BOTTOM if alongy axis
     void set_route(bool route) {
-        xVel = route * vel;
-        yVel = !route * vel;
+        stats->xVel = route * stats->vel;
+        stats->yVel = !route * stats->vel;
     }
 
     bool circle_rect_collision(SDL_Point* center, int* radius, SDL_Rect* rectangle) {
@@ -299,39 +313,39 @@ struct Enemy {
 
     //moving projectile when enemy is in move stance
     void move() {
-        if (projectile_launched) move_projectile();
+        if (projectile->launched) move_projectile();
 
-        dest.x += xVel;
-        if (dest.x < 0 || dest.x + dest.w > game->SCREEN_WIDTH || tile->tile_gate_wall_collission(&dest, 7) || dest.x == originX + route_length || dest.x == originX)
-            xVel = -xVel;
+        dest.x += stats->xVel;
+        if (dest.x < 0 || dest.x + dest.w > game->SCREEN_WIDTH || tile->tile_gate_wall_collission(&dest, 7) || dest.x == originX + stats->route_length || dest.x == originX)
+            stats->xVel = -stats->xVel;
 
-        dest.y += yVel;
-        if (dest.y < 0 || dest.y + dest.h > game->SCREEN_HEIGHT || tile->tile_gate_wall_collission(&dest, 7) || dest.y == originY + route_length || dest.y == originY)
-            yVel = -yVel;
+        dest.y += stats->yVel;
+        if (dest.y < 0 || dest.y + dest.h > game->SCREEN_HEIGHT || tile->tile_gate_wall_collission(&dest, 7) || dest.y == originY + stats->route_length || dest.y == originY)
+            stats->yVel = -stats->yVel;
 
         enemy_center = {dest.x + dest.w / 2, dest.y + dest.h / 2};
 
-        if (xVel > 0) flip = SDL_FLIP_NONE;
-        if (xVel < 0) flip = SDL_FLIP_HORIZONTAL;
+        if (stats->xVel > 0) flip = SDL_FLIP_NONE;
+        if (stats->xVel < 0) flip = SDL_FLIP_HORIZONTAL;
         frame++;
         frame %= (sprites_per_row[enemy_status] * sprites_per_col[enemy_status] * slow_factor[enemy_status]);
 
         //of projectile is not launched, projectile is on the enemy body
-        if (!projectile_launched)
+        if (!projectile->launched)
             projectile_dest.x = dest.x,
             projectile_dest.y = dest.y;
     }
 
     //makes projectile leave enemy body and go for the player. Takes player's pointer as argument
     void launch_projectile() {
-        projectile_launched = true;
+        projectile->launched = true;
         projectile_center = enemy_center;
         const int dy = player->player_center.y - enemy_center.y;
         const int dx = player->player_center.x - enemy_center.x;
         double component_factor = atan((double)abs(dy) / (double)abs(dx));
 
-        projectile_xVel = (dx > 0 ? 1.0 : -1.0) * (double)projectile_vel * cos(component_factor);
-        projectile_yVel = (dy > 0 ? 1.0 : -1.0) * (double)projectile_vel * sin(component_factor);
+        projectile->xVel = (dx > 0 ? 1.0 : -1.0) * (double)projectile->vel * cos(component_factor);
+        projectile->yVel = (dy > 0 ? 1.0 : -1.0) * (double)projectile->vel * sin(component_factor);
     }
 
     //once projectile is launched, moves projectile towards plater. Takes tile pointer as argument to check wall collission and player pointer to check player collsiion
@@ -340,17 +354,17 @@ struct Enemy {
         static double projectile_yPos = 0;
 
         projectile_center.x -= (int)projectile_xPos;
-        projectile_xPos += projectile_xVel;
+        projectile_xPos += projectile->xVel;
 
         projectile_center.y -= (int)projectile_yPos;
-        projectile_yPos += projectile_yVel;
+        projectile_yPos += projectile->yVel;
 
-        projectile_angle += 20;
-        if (projectile_angle >= 360.0) projectile_angle = 0;
+        projectile->angle += 20;
+        if (projectile->angle >= 360.0) projectile->angle = 0;
 
         //if projectile has already travelled it's attack distance, it teleports back to enemybody
-        if ((int)projectile_xPos * (int)projectile_xPos + (int)projectile_yPos * (int)projectile_yPos > attack_range * attack_range) {
-            projectile_launched = false;
+        if ((int)projectile_xPos * (int)projectile_xPos + (int)projectile_yPos * (int)projectile_yPos > stats->attack_range * stats->attack_range) {
+            projectile->launched = false;
             projectile_xPos = 0;
             projectile_yPos = 0;
             return;
@@ -368,19 +382,19 @@ struct Enemy {
             player_damage_event.type = SDL_RegisterEvents(1);
 
             if (player_damage_event.type == (Uint32)-1) error else {
-                    player_damage_event.user.data1 = &damage;
-                    player_damage_event.user.code = game->player_damaged;
+                    player_damage_event.user.data1 = &stats->damage;
+                    player_damage_event.user.code = game->event.player_damaged;
                     SDL_PushEvent(&player_damage_event);
                 }
 
-            projectile_launched = false;
+            projectile->launched = false;
             projectile_xPos = 0;
             projectile_yPos = 0;
             return;
         }
         //if projectile collides with wall, it teleports back to enemy body
         else if (tile->tile_gate_wall_collission(&projectile_dest, 0)) {
-            projectile_launched = false;
+            projectile->launched = false;
             projectile_xPos = 0;
             projectile_yPos = 0;
             return;
@@ -389,13 +403,13 @@ struct Enemy {
 
     //player attack stance
     void attack() {
-        static Uint32 start = SDL_GetTicks() - attack_delay;
+        static Uint32 start = SDL_GetTicks() - stats->attack_delay;
 
         //launches a projectile after attack delay
-        if (SDL_GetTicks() - start > attack_delay) launch_projectile(), start = SDL_GetTicks(), frame = 0;
+        if (SDL_GetTicks() - start > stats->attack_delay) launch_projectile(), start = SDL_GetTicks(), frame = 0;
 
         //moving projectile when player is in attack stance
-        if (projectile_launched) move_projectile();
+        if (projectile->launched) move_projectile();
         if (frame >= 0) frame++;
         if (frame >= (sprites_per_row[enemy_status] * sprites_per_col[enemy_status] * slow_factor[enemy_status])) frame = -1;
     }
@@ -419,8 +433,10 @@ struct Enemy {
         line_of_sight.reset(&player->player_center, &enemy_center);
 
         
-        if (e.user.code == game->enemy_damaged) {
-            e.user.code = 2;
+        if (e.user.code == game->event.enemy_damaged) {
+            // e.user.code = 2;
+            game->event.reset(e);
+
 
             SDL_Rect attack_rect;
             if (player->flip == SDL_FLIP_NONE)
@@ -432,9 +448,9 @@ struct Enemy {
 
                 enemy_status = ENEMY_HURT;
                 frame = 0;
-                hit_point -= player->stats->attack_damage;
+                stats->hit_point -= player->stats->attack_damage;
 
-                if (hit_point <= 0) enemy_status = ENEMY_DYING, frame = 0;
+                if (stats->hit_point <= 0) enemy_status = ENEMY_DYING, frame = 0;
             }
         }
         
@@ -479,8 +495,8 @@ struct Enemy {
         projectile_dest.y -= translateY;
 
         SDL_RenderCopyEx(game->renderer, look[enemy_status], &src, &dest, 0.0, NULL, flip);
-        if (projectile_launched)  //if projectile is launched, renders projectile
-            SDL_RenderCopyEx(game->renderer, projectile, NULL, &projectile_dest, projectile_angle, NULL, SDL_FLIP_NONE);
+        if (projectile->launched)  //if projectile is launched, renders projectile
+            SDL_RenderCopyEx(game->renderer, projectile_look, NULL, &projectile_dest, projectile->angle, NULL, SDL_FLIP_NONE);
 
         dest.x += translateX;
         dest.y += translateY;
