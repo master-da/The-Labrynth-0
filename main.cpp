@@ -9,8 +9,8 @@ void loadmedia(Tile* tile, Player* player, Enemy* enemy_one, Enemy* enemy_two) {
     tile->loadImageFromFile("png/level-1-tiles.png");
     tile->loadInfoFromFile("map/mapped.txt ");
     player->loadFromFile("png/idle_player.png", "png/walk_player.png", "png/attack_player.png", "png/hurt_player.png","png/dying_player.png");
-    enemy_one->loadFromFile("png/walk_enemy.png", "png/attack_enemy.png", "png/hurt_enemy.png", "png/dying_enemy.png", "png/weapon_enemy.png");
-    enemy_two->loadFromFile("png/walk_enemy.png", "png/attack_enemy.png", "png/hurt_enemy.png", "png/dying_enemy.png", "png/weapon_enemy.png");
+    enemy_one->loadFromFile("png/walk_enemy.png", "png/attack_enemy.png", "png/hurt_enemy.png", "png/dying_enemy.png", "png/weapon_enemy.png", "png/health_bar_enemy.png");
+    enemy_two->loadFromFile("png/walk_enemy.png", "png/attack_enemy.png", "png/hurt_enemy.png", "png/dying_enemy.png", "png/weapon_enemy.png", "png/health_bar_enemy.png");
 }
 
 int main(int argc, char* argv[]) {
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     Enemy* enemy_one = new Enemy(32, 32, game, tile, player);
     Enemy* enemy_two = new Enemy(32, 32, game, tile, player);
 
-    game->init("a", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0);
+    game->init("a", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1);
     SDL_Event e;
     bool quit = false;
     loadmedia(tile, player, enemy_one, enemy_two);
