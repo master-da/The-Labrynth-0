@@ -31,9 +31,6 @@ struct Player {
             yVel = 0;
         }
     };
-
-
-
     
     int frame;                            //the sprite from the spritesheet that will be renderer
     int sprite_per_row[PLAYER_TOTAL_STATI];//walk, attack, idle -each sprite sheet has different numbers of sprites per row and column
@@ -83,6 +80,7 @@ struct Player {
 
         flip = SDL_FLIP_NONE;
     }
+    
     ~Player() {
         stats->xVel = stats->yVel = 0;
     }
