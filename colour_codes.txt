@@ -1,0 +1,18 @@
+*colours in the format r. g, b
+*other than gates and switches, all other blocks have non-zero blue values
+*gates have zero red value and zero blue value
+*switches have zero green value and zero blue value
+
+walkable tiles = 255, 255, 255
+wall = 0, 0, 255
+decorative wall = 128, 0, 128
+bush = 64, 128, 128
+
+gate1 = 0, 128, 0         switch1 = 128, 0, 0
+gate2 = 0, 152, 0         switch2 = 152, 0, 0
+gate3 = 0, 164, 0         switch3 = 164, 0, 0
+gate4 = 0, 176, 0         switch4 = 176, 0, 0
+gate5 = 0, 188, 0         switch5 = 188, 0, 0
+gate6 = 0, 200, 0         switch6 = 200, 0, 0
+gate7 = 0, 228, 0         switch7 = 228, 0, 0
+gate8 = 0, 250, 0         switch8 = 250, 0, 0

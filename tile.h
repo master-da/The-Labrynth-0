@@ -101,6 +101,19 @@ struct Tile {
                 (botright == TILE_WALL || botright == TILE_SLOPE || botright == TILE_GATE));
     }
 
+    //detects and entity's collision with wall. trims the entity's dimensions so it can fit into smaller spaces
+    int tile_wall_collission(SDL_Rect* a, int trim) {
+        int topleft = tile_type[(a->y + trim) / tile_height][(a->x + trim) / tile_width] % 100;
+        int topright = tile_type[(a->y + trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
+        int botleft = tile_type[(a->y + a->h - trim) / tile_height][(a->x + trim) / tile_width] % 100;
+        int botright = tile_type[(a->y + a->h - trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
+
+        return (topleft <= TILE_SLOPE ||
+                topright <= TILE_SLOPE ||
+                botleft <= TILE_SLOPE ||
+                botright <= TILE_SLOPE);
+    }
+
     //checks if an entity is colliding with some button
     int tile_button_collission(SDL_Rect* a) {
         if (tile_type[a->y / tile_height][a->x / tile_width] % 100 == TILE_BUTTON)

@@ -198,10 +198,10 @@ struct Player {
         frame %= (sprite_per_row[PLAYER_MOVE] * sprite_per_col[PLAYER_MOVE] * slow_factor[PLAYER_MOVE]);
 
         dest.x += stats->xVel;
-        if (dest.x < 0 || dest.x + dest.w > game->SCREEN_WIDTH || tile->tile_gate_wall_collission(&dest, 7)) dest.x -= stats->xVel;
+        if (dest.x < 0 || dest.x + dest.w > game->LEVEL_WIDTH || tile->tile_gate_wall_collission(&dest, 7)) dest.x -= stats->xVel;
 
         dest.y += stats->yVel;
-        if (dest.y < 0 || dest.y + dest.h > game->SCREEN_HEIGHT || tile->tile_gate_wall_collission(&dest, 7)) dest.y -= stats->yVel;
+        if (dest.y < 0 || dest.y + dest.h > game->LEVEL_HEIGHT || tile->tile_gate_wall_collission(&dest, 7)) dest.y -= stats->yVel;
 
         player_center.x = dest.x + dest.w / 2;
         player_center.y = dest.y + dest.h / 2;
@@ -246,18 +246,31 @@ struct Player {
     }
 
     //handles players actions based on human input. Takes argument SDL_Event to check human activity. And tile pointer to check button activity
-    void event_handler(SDL_Event& e) {
+    void handle_event(SDL_Event& e) {
         if (dead) return;
 
-        static bool keyUpCheck = false;  //will only check for SDL_KEYUP if we already have had the event SDL_KEYDOWN
+        //player cannot move orbe idle when it's in attack, hurt or death animation
+        if (player_status < PLAYER_ATTACK) {
 
-        if (player_status < PLAYER_ATTACK && e.type == SDL_KEYDOWN && !e.key.repeat) {
-            if (e.key.keysym.sym == SDLK_w) stats->yVel = -6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
-            if (e.key.keysym.sym == SDLK_s) stats->yVel = 6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true;
-            if (e.key.keysym.sym == SDLK_a) stats->xVel = -6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true, flip = SDL_FLIP_HORIZONTAL;
-            if (e.key.keysym.sym == SDLK_d) stats->xVel = 6, player_status = PLAYER_MOVE, frame = 0, keyUpCheck = true, flip = SDL_FLIP_NONE;
+            const Uint8* key_state = SDL_GetKeyboardState(NULL);
 
-            if (e.key.keysym.sym == SDLK_e) {
+            if(key_state[SDL_SCANCODE_W]) stats->yVel = -6;
+            else if (key_state[SDL_SCANCODE_S]) stats->yVel = 6;
+            else stats->yVel = 0;
+
+            if (key_state[SDL_SCANCODE_A]) stats->xVel = -6, flip = SDL_FLIP_HORIZONTAL;
+            else if (key_state[SDL_SCANCODE_D]) stats->xVel = 6, flip = SDL_FLIP_NONE;
+            else stats->xVel = 0;
+
+            if(stats->xVel||stats->yVel){
+                if(player_status == PLAYER_IDLE) frame = 0;
+                player_status = PLAYER_MOVE;
+            } else {
+                if(player_status == PLAYER_MOVE) frame = 0;
+                player_status == PLAYER_IDLE;
+            }
+
+            if (key_state[SDL_SCANCODE_E]) {
                 int tile_button_collission = tile->tile_button_collission(&dest);
 
                 //if player collides with a switch and pressed e, corresponding gate will open
@@ -270,13 +283,14 @@ struct Player {
                     }
                 }
             }
-        }
 
-        //player can't move if it's not idle or moving alreadt. Therefore the < PLAYER_ATTACK condition
-        else if (player_status < PLAYER_ATTACK && e.type == SDL_KEYUP && keyUpCheck)
-            stats->xVel = stats->yVel = 0, player_status = PLAYER_IDLE, frame = 0, keyUpCheck = false;
-        else if (player_status < PLAYER_ATTACK && e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT)
-            player_status = PLAYER_ATTACK, frame = 0;
+            //mousebutton press makes player attack 
+            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT)
+                player_status = PLAYER_ATTACK, frame = 0;
+
+        }
+        
+        //enemy attacking raises the user event player_damaged
         else if (e.user.code == game->event.player_damaged) {
 
             player_status = PLAYER_HURT, frame = 0;

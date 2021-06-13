@@ -11,8 +11,10 @@ struct Game {
         OPTIONS_SCREEN,
         HISCORE_SCREEN,
         LEVEL_1,
+        LEVEL_2,
         QUIT_SCREEN
     };
+    
     enum buttonid {
         BUTTON_START,
         BUTTON_LOAD,
@@ -36,15 +38,16 @@ struct Game {
     SDL_Renderer* renderer;
     Events event;
     SDL_Rect camera;
-    int SCREEN_WIDTH, SCREEN_HEIGHT;  //dimensions of the total level. LEVEL_WIDHT would make more sense i understand
+    int LEVEL_WIDTH, LEVEL_HEIGHT;  //dimensions of the total level. LEVEL_WIDHT would make more sense i understand
     int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
-    int current_screen;     
+    int current_screen;
+    bool game_running;
 
-    Game(int width, int height) {
+    Game() {
         window = NULL;
         renderer = NULL;
-        SCREEN_WIDTH = width;
-        SCREEN_HEIGHT = height;
+        // LEVEL_WIDTH = width;
+        // LEVEL_HEIGHT = height;
         RENDER_WIDTH = 800;
         RENDER_HEIGHT = 600;
         camera = {0, 0, RENDER_WIDTH, RENDER_HEIGHT};  //SDL_Rect camera now know what part to render
@@ -52,9 +55,11 @@ struct Game {
         event.player_damaged = 44;
         event.enemy_damaged = 45;
         event.reset_event = 2;
+        game_running = true;
 
-        current_screen = LEVEL_1;
+        current_screen = LEVEL_2;
     }
+    
     ~Game() {
         close();
     }
@@ -102,18 +107,19 @@ struct Game {
         return 1;
     }
 
+    void set_level_dimension(int width, int height){
+        LEVEL_WIDTH = width;
+        LEVEL_HEIGHT = height;
+    }
+
     //after every player movement, focus camera on player head, and render a 800x600 region around player
     void camera_set(SDL_Rect* rect) {
         camera.x = rect->x + rect->w / 2 - RENDER_WIDTH / 2;
         camera.y = rect->y + rect->h / 2 - RENDER_HEIGHT / 2;
         if (camera.x < 0) camera.x = 0;
-        if (camera.x + camera.w > SCREEN_WIDTH) camera.x = SCREEN_WIDTH - camera.w;
+        if (camera.x + camera.w > LEVEL_WIDTH) camera.x = LEVEL_WIDTH - camera.w;
         if (camera.y < 0) camera.y = 0;
-        if (camera.y + camera.h > SCREEN_HEIGHT) camera.y = SCREEN_HEIGHT - camera.h;
-    }
-
-    void event_handler(SDL_Event e){
-        
+        if (camera.y + camera.h > LEVEL_HEIGHT) camera.y = LEVEL_HEIGHT - camera.h;
     }
 
     void close() {

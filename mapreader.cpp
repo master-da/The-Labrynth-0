@@ -237,7 +237,7 @@ LTexture map;
 std::ofstream gFile;
 
 void loadmedia() {
-    map.loadFromFile("png/1.png");
+    map.loadFromFile("png/test.png");
     gFile.open("mapped.txt");
 }
 
@@ -252,28 +252,36 @@ int main(int argc, char* argv[]) {
     Uint32* pixel = (Uint32*)map.getPixels();
     int pixelcount = (map.getPitch() / 4) * map.getHeight();
 
-    Uint32 wall = SDL_MapRGB(mappingformat, 0, 0, 0);
-    Uint32 slope = SDL_MapRGB(mappingformat, 255, 0, 0);
+    Uint32 wall1 = SDL_MapRGB(mappingformat, 0, 0, 255);
+    Uint32 wall2 = SDL_MapRGB(mappingformat, 128, 0, 128);
     Uint32 walk = SDL_MapRGB(mappingformat, 255, 255, 255);
-    Uint32 button = SDL_MapRGB(mappingformat, 0, 0, 255);
-    Uint32 gate = SDL_MapRGB(mappingformat, 0, 255, 0);
+    Uint32 bush = SDL_MapRGB(mappingformat, 64, 128, 128);
 
     Uint8 r, g, b;
 
     for (int i = 0; i < 30; i++) {
         for (int j = 0; j < 40; j++) {
             SDL_GetRGB(pixel[40 * i + j], mappingformat, &r, &g, &b);
+            
+            if(!b){
+                if(!r){
+                    if(!(g/10)) gFile << "0";
+                    gFile << g << "04 ";
+                } else{
+                    if(!(r/10)) gFile << "0";
+                    gFile << g << "03";
+                }                
+            }
 
-            if (SDL_MapRGB(mappingformat, r, g, b) == wall)
+            if (SDL_MapRGB(mappingformat, r, g, b) == wall1)
                 gFile << "0000 ";
-            else if (SDL_MapRGB(mappingformat, r, g, b) == slope)
+            else if (SDL_MapRGB(mappingformat, r, g, b) == wall2)
                 gFile << "0001 ";
             else if (SDL_MapRGB(mappingformat, r, g, b) == walk)
                 gFile << "0002 ";
-            else if (SDL_MapRGB(mappingformat, r, g, b) == button)
-                gFile << "0003 ";
-            else if (SDL_MapRGB(mappingformat, r, g, b) == gate)
-                gFile << "0004 ";
+            else if (SDL_MapRGB(mappingformat, r, g, b) == bush)
+                gFile << "0005 ";
+            
         }
         gFile << "\n";
     }

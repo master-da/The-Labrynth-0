@@ -272,7 +272,7 @@ struct Enemy {
     }
 
     //setting player spawn point
-    void set_spawn(int x, int y) {
+    void set_spawn(int x, int y, bool route) {
         originX = x * dest.w;
         originY = y * dest.h;
 
@@ -280,10 +280,7 @@ struct Enemy {
 
         dest.x = originX;
         dest.y = originY;
-    }
-
-    //setting player patrol route. LEFT_RIGHT if along x axis, TOP_BOTTOM if alongy axis
-    void set_route(bool route) {
+        
         stats->xVel = route * stats->vel;
         stats->yVel = !route * stats->vel;
     }
@@ -313,14 +310,12 @@ struct Enemy {
 
     //moving projectile when enemy is in move stance
     void move() {
-        if (projectile->launched) move_projectile();
-
         dest.x += stats->xVel;
-        if (dest.x < 0 || dest.x + dest.w > game->SCREEN_WIDTH || tile->tile_gate_wall_collission(&dest, 7) || dest.x == originX + stats->route_length || dest.x == originX)
+        if (dest.x < 0 || dest.x + dest.w > game->LEVEL_WIDTH || tile->tile_gate_wall_collission(&dest, 7) || dest.x == originX + stats->route_length || dest.x == originX)
             stats->xVel = -stats->xVel;
 
         dest.y += stats->yVel;
-        if (dest.y < 0 || dest.y + dest.h > game->SCREEN_HEIGHT || tile->tile_gate_wall_collission(&dest, 7) || dest.y == originY + stats->route_length || dest.y == originY)
+        if (dest.y < 0 || dest.y + dest.h > game->LEVEL_HEIGHT || tile->tile_gate_wall_collission(&dest, 7) || dest.y == originY + stats->route_length || dest.y == originY)
             stats->yVel = -stats->yVel;
 
         enemy_center = {dest.x + dest.w / 2, dest.y + dest.h / 2};
@@ -375,7 +370,7 @@ struct Enemy {
         projectile_dest.x = projectile_center.x - projectile_dest.w / 2;
         projectile_dest.y = projectile_center.y - projectile_dest.h / 2;
 
-        //if projectile collides with player, player will soon get damaged. Work in Progress
+        //if projectile collides with player, player will soon get damaged.
         if (player->rect_collission(projectile_dest)) {
             SDL_Event player_damage_event;
             SDL_memset(&player_damage_event, 0, sizeof(player_damage_event));
@@ -393,7 +388,7 @@ struct Enemy {
             return;
         }
         //if projectile collides with wall, it teleports back to enemy body
-        else if (tile->tile_gate_wall_collission(&projectile_dest, 0)) {
+        else if (tile->tile_wall_collission(&projectile_dest, 0)) {
             projectile->launched = false;
             projectile_xPos = 0;
             projectile_yPos = 0;
@@ -408,8 +403,6 @@ struct Enemy {
         //launches a projectile after attack delay
         if (SDL_GetTicks() - start > stats->attack_delay) launch_projectile(), start = SDL_GetTicks(), frame = 0;
 
-        //moving projectile when player is in attack stance
-        if (projectile->launched) move_projectile();
         if (frame >= 0) frame++;
         if (frame >= (sprites_per_row[enemy_status] * sprites_per_col[enemy_status] * slow_factor[enemy_status])) frame = -1;
     }
@@ -426,17 +419,16 @@ struct Enemy {
 
     //enemy responding to player events.
     void handle_event(SDL_Event& e) {
+        if(projectile->launched) move_projectile();
         if (dead) return;
-        // printf("user code %d\n", e.user.code);
 
         //resetting points to establish line of sight each time player or enemy moves
         line_of_sight.reset(&player->player_center, &enemy_center);
 
         
         if (e.user.code == game->event.enemy_damaged) {
-            // e.user.code = 2;
+            
             game->event.reset(e);
-
 
             SDL_Rect attack_rect;
             if (player->flip == SDL_FLIP_NONE)

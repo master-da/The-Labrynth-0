@@ -1,4 +1,4 @@
-FILENAMES = main.cpp
+FILENAMES = main.cpp screen.cpp
 
 CC = g++.exe
 
