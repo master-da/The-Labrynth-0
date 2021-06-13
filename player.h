@@ -249,8 +249,17 @@ struct Player {
     void handle_event(SDL_Event& e) {
         if (dead) return;
 
+        if (e.user.code == game->event.player_damaged) {
+
+            player_status = PLAYER_HURT, frame = 0;
+            stats->hit_points -= *((int*)e.user.data1);
+            game->event.reset(e);
+            if (stats->hit_points <= 0) player_status = PLAYER_DYING;
+            
+        }
+
         //player cannot move orbe idle when it's in attack, hurt or death animation
-        if (player_status < PLAYER_ATTACK) {
+        else if (player_status < PLAYER_ATTACK) {
 
             const Uint8* key_state = SDL_GetKeyboardState(NULL);
 
@@ -288,16 +297,6 @@ struct Player {
             if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT)
                 player_status = PLAYER_ATTACK, frame = 0;
 
-        }
-        
-        //enemy attacking raises the user event player_damaged
-        else if (e.user.code == game->event.player_damaged) {
-
-            player_status = PLAYER_HURT, frame = 0;
-            stats->hit_points -= *((int*)e.user.data1);
-            game->event.reset(e);
-            if (stats->hit_points <= 0) player_status = PLAYER_DYING;
-            
         }
 
         if (player_status == PLAYER_IDLE)

@@ -25,6 +25,7 @@ struct Enemy {
         int vel;
         int damage;
         int hit_point;
+        int hit_point_max;
         int route_length;
         Uint32 attack_range;
         Uint32 attack_delay;
@@ -33,6 +34,7 @@ struct Enemy {
             vel = 2;
             damage = 15;
             hit_point = 35;
+            hit_point_max = 35;
             attack_range = 180;
             attack_delay = 4000;
             route_length = 120;
@@ -162,9 +164,11 @@ struct Enemy {
 
     SDL_Texture* look[ENEMY_TOTAL];  //different textures for different enemy status. attack patrol etc.
     SDL_Texture* projectile_look;         //texture for projectile. Enemy launches it's weapon
+    SDL_Texture* health_bar;
     SDL_Rect src;                    //source rectangle from the spritesheer
     SDL_Rect dest;                   //destination rectangle in the map
     SDL_Rect projectile_dest;        //destination rectangle in the map for projectile
+    SDL_Rect health_rect;
     SDL_RendererFlip flip;           //enemy faces left when it's going/attacking to the left
     SDL_Point enemy_center;          //enemy's body center. Used for establishing line of sight
     SDL_Point projectile_center;     //Center of projectile. Obsolete. Don't delete
@@ -217,7 +221,7 @@ struct Enemy {
     }
 
     //loading all the textures for enemy
-    void loadFromFile(std::string walk_path, std::string attack_path, std::string hurt_path, std::string dying_path, std::string weapon_path) {
+    void loadFromFile(std::string walk_path, std::string attack_path, std::string hurt_path, std::string dying_path, std::string weapon_path, std::string health_bar_path) {
         SDL_Surface* tempImage = IMG_Load(walk_path.c_str());
         if (tempImage == NULL) error_i;
 
@@ -264,6 +268,15 @@ struct Enemy {
         projectile_look = SDL_CreateTextureFromSurface(game->renderer, tempImage);
         if (projectile)
             printf("Enemy weapon was loaded from \"%s\"\n", weapon_path.c_str());
+        else
+            error;
+
+        tempImage = IMG_Load(health_bar_path.c_str());
+        if (tempImage == NULL) error_i;
+
+        health_bar = SDL_CreateTextureFromSurface(game->renderer, tempImage);
+        if (projectile)
+            printf("Enemy health bar was loaded from \"%s\"\n", health_bar_path.c_str());
         else
             error;
 
@@ -486,7 +499,12 @@ struct Enemy {
         projectile_dest.x -= translateX;
         projectile_dest.y -= translateY;
 
+        int health_bar_width = (double)stats->hit_point/(double)stats->hit_point_max * (double)dest.w;
+
+        health_rect = {dest.x, dest.y - 12, health_bar_width, 4};
+
         SDL_RenderCopyEx(game->renderer, look[enemy_status], &src, &dest, 0.0, NULL, flip);
+        SDL_RenderCopy(game->renderer, health_bar, NULL, &health_rect);
         if (projectile->launched)  //if projectile is launched, renders projectile
             SDL_RenderCopyEx(game->renderer, projectile_look, NULL, &projectile_dest, projectile->angle, NULL, SDL_FLIP_NONE);
 

@@ -10,7 +10,7 @@ void loadPlayer(Player* player){
 }
 
 void loadEnemy(Enemy* enemy_one){
-    enemy_one->loadFromFile("png/walk_enemy.png", "png/attack_enemy.png", "png/hurt_enemy.png", "png/dying_enemy.png", "png/weapon_enemy.png");
+    enemy_one->loadFromFile("png/walk_enemy.png", "png/attack_enemy.png", "png/hurt_enemy.png", "png/dying_enemy.png", "png/weapon_enemy.png", "png/health_bar.png");
 }
 
 void UI(){
