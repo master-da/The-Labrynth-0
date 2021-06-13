@@ -112,7 +112,7 @@ struct Enemy {
                     decision_factor += (2 * dy);
 
                 int tileType = tile->tile_type[start.y / tile->tile_height][start.x / tile->tile_width];
-                if ((tileType == tile->TILE_WALL) || (tileType == tile->TILE_SLOPE)) return 0;
+                if ((tileType <= tile->TILE_WALL2)) return 0;
             }
             return 1;
         }
@@ -137,7 +137,7 @@ struct Enemy {
                     decision_factor += (2 * dx);
 
                 int tileType = tile->tile_type[start.y / tile->tile_height][start.x / tile->tile_width];
-                if ((tileType == tile->TILE_WALL) || (tileType == tile->TILE_SLOPE)) return 0;
+                if ((tileType <= tile->TILE_WALL2)) return 0;
             }
             return 1;
         }

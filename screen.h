@@ -5,9 +5,12 @@
 #include "tile.h"
 #include "player.h"
 #include "enemy.h"
+#include "button.h"
 
-void level_one(Game* game);
+void UI(Game*);
 
-void level_two(Game* game);
+void level_one(Game*);
 
-void level_three(Game* game);
+void level_two(Game*);
+
+void level_three(Game*);

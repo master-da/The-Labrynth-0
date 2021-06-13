@@ -24,8 +24,8 @@ struct Tile {
     } par[10];
 
     enum tile_identity {
-        TILE_WALL,
-        TILE_SLOPE,
+        TILE_WALL1,
+        TILE_WALL2,
         TILE_WALK,
         TILE_BUTTON,
         TILE_GATE,
@@ -41,8 +41,8 @@ struct Tile {
         game = inpGame;
 
         //location of different tile types in my tilesheet. NEEDS TO BE CHANGED FOR NEW TILESHEET
-        tiles[TILE_WALL] = {32, 0, 32, 32};
-        tiles[TILE_SLOPE] = {0, 32, 32, 32};
+        tiles[TILE_WALL1] = {32, 0, 32, 32};
+        tiles[TILE_WALL2] = {0, 32, 32, 32};
         tiles[TILE_WALK] = {0, 0, 32, 32};
         tiles[TILE_BUTTON] = {64, 0, 32, 32};
         tiles[TILE_GATE] = {32, 32, 32, 32};
@@ -89,29 +89,29 @@ struct Tile {
     }
 
     //detects and entity's collision with gate or wall. trims the entity's dimensions so it can fit into smaller spaces
-    int tile_gate_wall_collission(SDL_Rect* a, int trim) {
+    bool tile_gate_wall_collission(SDL_Rect* a, int trim) {
         int topleft = tile_type[(a->y + trim) / tile_height][(a->x + trim) / tile_width] % 100;
         int topright = tile_type[(a->y + trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
         int botleft = tile_type[(a->y + a->h - trim) / tile_height][(a->x + trim) / tile_width] % 100;
         int botright = tile_type[(a->y + a->h - trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
 
-        return ((topleft == TILE_WALL || topleft == TILE_SLOPE || topleft == TILE_GATE) ||
-                (topright == TILE_WALL || topright == TILE_SLOPE || topright == TILE_GATE) ||
-                (botleft == TILE_WALL || botleft == TILE_SLOPE || botleft == TILE_GATE) ||
-                (botright == TILE_WALL || botright == TILE_SLOPE || botright == TILE_GATE));
+        return ((topleft == TILE_WALL1 || topleft == TILE_WALL2 || topleft == TILE_GATE) ||
+                (topright == TILE_WALL1 || topright == TILE_WALL2 || topright == TILE_GATE) ||
+                (botleft == TILE_WALL1 || botleft == TILE_WALL2 || botleft == TILE_GATE) ||
+                (botright == TILE_WALL1 || botright == TILE_WALL2 || botright == TILE_GATE));
     }
 
     //detects and entity's collision with wall. trims the entity's dimensions so it can fit into smaller spaces
-    int tile_wall_collission(SDL_Rect* a, int trim) {
+    bool tile_wall_collission(SDL_Rect* a, int trim) {
         int topleft = tile_type[(a->y + trim) / tile_height][(a->x + trim) / tile_width] % 100;
         int topright = tile_type[(a->y + trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
         int botleft = tile_type[(a->y + a->h - trim) / tile_height][(a->x + trim) / tile_width] % 100;
         int botright = tile_type[(a->y + a->h - trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
 
-        return (topleft <= TILE_SLOPE ||
-                topright <= TILE_SLOPE ||
-                botleft <= TILE_SLOPE ||
-                botright <= TILE_SLOPE);
+        return (topleft <= TILE_WALL2 ||
+                topright <= TILE_WALL2 ||
+                botleft <= TILE_WALL2 ||
+                botright <= TILE_WALL2);
     }
 
     //checks if an entity is colliding with some button
@@ -130,6 +130,18 @@ struct Tile {
 
         else
             return 0;
+    }
+
+    bool tile_endgame_collission(SDL_Rect* a, int trim) {
+        int topleft = tile_type[(a->y + trim) / tile_height][(a->x + trim) / tile_width] % 100;
+        int topright = tile_type[(a->y + trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
+        int botleft = tile_type[(a->y + a->h - trim) / tile_height][(a->x + trim) / tile_width] % 100;
+        int botright = tile_type[(a->y + a->h - trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
+
+        return (topleft == 9999 ||
+                topright == 9999 ||
+                botleft == 9999 ||
+                botright == 9999);
     }
 
     //takes camera as argument. Renders all tiles that fit into the camera. Probably renders 1 tile along all directions outside the camera
@@ -154,21 +166,21 @@ struct Tile {
 
                 //makes sure dark side of the slope tile is facing the walkable tile
                 //NEED TO CHANGE IF USING NEW TEXTUREPACK
-                if (type == TILE_SLOPE) {
-                    if (tile_type[(int)(y / tile_height)][(int)(x / tile_width) + 1] == TILE_WALL)
+                if (type == TILE_WALL2) {
+                    if (tile_type[(int)(y / tile_height)][(int)(x / tile_width) + 1] == TILE_WALL1)
                         angle = 90.0;
-                    else if (tile_type[(int)(y / tile_height)][(int)(x / tile_width) - 1] == TILE_WALL)
+                    else if (tile_type[(int)(y / tile_height)][(int)(x / tile_width) - 1] == TILE_WALL1)
                         angle = 270.0;
-                    else if (tile_type[(int)(y / tile_height) + 1][(int)(x / tile_width)] == TILE_WALL)
+                    else if (tile_type[(int)(y / tile_height) + 1][(int)(x / tile_width)] == TILE_WALL1)
                         angle = 180.0;
                 }
-                // else if(type == TILE_GATE && tile_type [ (int)(y / tile_height) + 1] [ (int)(x / tile_width) ] <= TILE_SLOPE) angle = 90.0;
+                // else if(type == TILE_GATE && tile_type [ (int)(y / tile_height) + 1] [ (int)(x / tile_width) ] <= TILE_WALL2) angle = 90.0;
                 else if (type == TILE_GATE) {
-                    if ((tile_type[y / tile_height + 1][x / tile_width] == TILE_WALL) ||
-                        (tile_type[y / tile_height + 1][x / tile_width] == TILE_SLOPE) ||
+                    if ((tile_type[y / tile_height + 1][x / tile_width] == TILE_WALL1) ||
+                        (tile_type[y / tile_height + 1][x / tile_width] == TILE_WALL2) ||
                         (tile_type[y / tile_height + 1][x / tile_width] == TILE_GATE) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_WALL) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_SLOPE) ||
+                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_WALL1) ||
+                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_WALL2) ||
                         (tile_type[y / tile_height - 1][x / tile_width] == TILE_GATE)) angle = 90.0;
                 }
 

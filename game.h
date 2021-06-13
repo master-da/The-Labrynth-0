@@ -6,10 +6,10 @@ struct Game {
     
     enum screens {
         UI_SCREEN,
-        START_SCREEN,
         LOAD_SCREEN,
         OPTIONS_SCREEN,
         HISCORE_SCREEN,
+        LEVEL_CHOICE,
         LEVEL_1,
         LEVEL_2,
         LEVEL_3,
@@ -22,7 +22,13 @@ struct Game {
         BUTTON_OPTIONS,
         BUTTON_HISCORE,
         BUTTON_QUIT,
-        BUTTON_BACK
+        BUTTON_NEXT,
+        BUTTON_HOME
+    };
+
+    enum button_size{
+        BUTTON_SMALL,
+        BUTTON_REGULAR
     };
 
     struct Events{
@@ -43,12 +49,11 @@ struct Game {
     int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
     int current_screen;
     bool game_running;
+    bool game_pause;
 
     Game() {
         window = NULL;
         renderer = NULL;
-        // LEVEL_WIDTH = width;
-        // LEVEL_HEIGHT = height;
         RENDER_WIDTH = 800;
         RENDER_HEIGHT = 600;
         camera = {0, 0, RENDER_WIDTH, RENDER_HEIGHT};  //SDL_Rect camera now know what part to render
@@ -57,8 +62,9 @@ struct Game {
         event.enemy_damaged = 45;
         event.reset_event = 2;
         game_running = true;
+        game_pause = false;
 
-        current_screen = LEVEL_3;
+        current_screen = UI_SCREEN;
     }
     
     ~Game() {
@@ -98,13 +104,15 @@ struct Game {
         SDL_SetWindowSize(window, RENDER_WIDTH, RENDER_HEIGHT);
     }
 
-    void button_action(int buttonID) {
-        if (buttonID == BUTTON_START) current_screen = START_SCREEN;
-        if (buttonID == BUTTON_LOAD) current_screen = LOAD_SCREEN;
-        if (buttonID == BUTTON_OPTIONS) current_screen = OPTIONS_SCREEN;
-        if (buttonID == BUTTON_HISCORE) current_screen = HISCORE_SCREEN;
-        if (buttonID == BUTTON_QUIT) current_screen = QUIT_SCREEN;
-        if (buttonID == BUTTON_BACK) current_screen = UI_SCREEN;
+    void button_action(int buttonID){
+        printf("here\n");
+        if(buttonID == BUTTON_START) current_screen = LEVEL_1;
+        if(buttonID == BUTTON_LOAD) current_screen = LEVEL_CHOICE;
+        if(buttonID == BUTTON_OPTIONS) current_screen = OPTIONS_SCREEN;
+        if(buttonID == BUTTON_HISCORE) current_screen = LOAD_SCREEN;
+        if(buttonID == BUTTON_QUIT) current_screen = QUIT_SCREEN;
+        if(buttonID == BUTTON_NEXT) current_screen = current_screen + 1;
+        if(buttonID == BUTTON_HOME) current_screen = UI_SCREEN;
     }
 
     //AABB collision detection.

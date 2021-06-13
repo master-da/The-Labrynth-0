@@ -256,6 +256,7 @@ int main(int argc, char* argv[]) {
     Uint32 wall2 = SDL_MapRGB(mappingformat, 128, 0, 128);
     Uint32 walk = SDL_MapRGB(mappingformat, 255, 255, 255);
     Uint32 bush = SDL_MapRGB(mappingformat, 64, 128, 128);
+    Uint32 endgame = SDL_MapRGB(mappingformat, 100, 100, 100);
 
     Uint8 r, g, b;
 
@@ -281,6 +282,8 @@ int main(int argc, char* argv[]) {
                 gFile << "0002 ";
             else if (SDL_MapRGB(mappingformat, r, g, b) == bush)
                 gFile << "0005 ";
+            else if(SDL_MapRGB(mappingformat, r, g, b) == endgame)
+                gFile << "9999 ";
             
         }
         gFile << "\n";
