@@ -437,7 +437,6 @@ struct Enemy {
 
         //resetting points to establish line of sight each time player or enemy moves
         line_of_sight.reset(&player->player_center, &enemy_center);
-
         
         if (e.user.code == game->event.enemy_damaged) {
             
@@ -460,7 +459,7 @@ struct Enemy {
         }
         
         if(enemy_status < ENEMY_HURT) {
-            if (enemy_status < ENEMY_HURT && line_of_sight.established()) {
+            if (enemy_status < ENEMY_HURT && line_of_sight.established() && !player->dead) {
                 if (enemy_status == ENEMY_PATROL) frame = 0;
 
                 flip = enemy_center.x - player->player_center.x < 0 ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL;

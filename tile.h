@@ -8,7 +8,7 @@ struct Tile {
     SDL_Texture* tileImage;
 
     int tile_width, tile_height;
-    int tile_type[30][40];
+    int tile_type[90][120];
 
     Game* game;
 
@@ -66,7 +66,7 @@ struct Tile {
     }
 
     //loads map info. What tile goes where. Which tile from the tilesheet goes where
-    void loadInfoFromFile(std::string path) {
+    void loadInfoFromFile(std::string path, int w, int h) {
         std::ifstream map(path);
 
         if (!map.fail())
@@ -74,8 +74,8 @@ struct Tile {
         else
             printf("Failed to load map\n");
 
-        for (int i = 0; i < 30; i++) {
-            for (int j = 0; j < 40; j++) {
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
                 map >> tile_type[i][j];
 
                 if (tile_type[i][j] % 100 == 4) {

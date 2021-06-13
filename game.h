@@ -12,6 +12,7 @@ struct Game {
         HISCORE_SCREEN,
         LEVEL_1,
         LEVEL_2,
+        LEVEL_3,
         QUIT_SCREEN
     };
     
@@ -57,7 +58,7 @@ struct Game {
         event.reset_event = 2;
         game_running = true;
 
-        current_screen = LEVEL_2;
+        current_screen = LEVEL_3;
     }
     
     ~Game() {
@@ -87,6 +88,14 @@ struct Game {
             printf("Renderer initialised\n");
         else
             error;
+    }
+
+    void resize_window(int w_, int h_){
+        RENDER_WIDTH = w_;
+        RENDER_HEIGHT = h_;
+        camera.w = RENDER_WIDTH;
+        camera.h = RENDER_HEIGHT;
+        SDL_SetWindowSize(window, RENDER_WIDTH, RENDER_HEIGHT);
     }
 
     void button_action(int buttonID) {

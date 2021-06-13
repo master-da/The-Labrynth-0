@@ -9,3 +9,5 @@
 void level_one(Game* game);
 
 void level_two(Game* game);
+
+void level_three(Game* game);

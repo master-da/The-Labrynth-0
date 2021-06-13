@@ -13,6 +13,7 @@ int main(int argc, char* argv[]) {
     while (game->game_running) {
         if(game->current_screen == game->LEVEL_1) level_one(game);
         else if(game->current_screen == game->LEVEL_2) level_two(game);
+        else if(game->current_screen == game->LEVEL_3) level_three(game);
     }
 
     game->close();

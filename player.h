@@ -276,7 +276,7 @@ struct Player {
                 player_status = PLAYER_MOVE;
             } else {
                 if(player_status == PLAYER_MOVE) frame = 0;
-                player_status == PLAYER_IDLE;
+                player_status = PLAYER_IDLE;
             }
 
             if (key_state[SDL_SCANCODE_E]) {

@@ -1,8 +1,8 @@
 #include "screen.h"
 
-void loadTile(Tile* tile, std::string tile_path, std::string file_path){
+void loadTile(Tile* tile, std::string tile_path, std::string file_path, int level_w, int level_h){
     tile->loadImageFromFile(tile_path);
-    tile->loadInfoFromFile(file_path);
+    tile->loadInfoFromFile(file_path, level_w, level_h);
 }
 
 void loadPlayer(Player* player){
@@ -13,15 +13,12 @@ void loadEnemy(Enemy* enemy_one){
     enemy_one->loadFromFile("png/walk_enemy.png", "png/attack_enemy.png", "png/hurt_enemy.png", "png/dying_enemy.png", "png/weapon_enemy.png", "png/health_bar.png");
 }
 
-void UI(){
-    
-}
-
 void level_one(Game* game){
     game->set_level_dimension(1280, 960);
 
+
     Tile* tile = new Tile(32, 32, game);
-    loadTile(tile, "png/level-1-tiles.png", "map/level-1.txt");
+    loadTile(tile, "png/level-1-tiles.png", "map/level_1.txt", 1280, 960);
 
     Player* player = new Player(32, 32, game, tile);
     loadPlayer(player);
@@ -57,7 +54,7 @@ void level_two(Game* game){
     game->set_level_dimension(1280, 960);
 
     Tile* tile = new Tile(32, 32, game);
-    loadTile(tile, "png/level-1-tiles.png", "map/level-2.txt");
+    loadTile(tile, "png/level-1-tiles.png", "map/level_2.txt", 40, 30);
 
     Player* player = new Player(32, 32, game, tile);
     loadPlayer(player);
@@ -95,3 +92,32 @@ void level_two(Game* game){
     }
 }
 
+void level_three(Game* game){
+    game->set_level_dimension(2560, 1920);
+
+    Tile* tile = new Tile(32, 32, game);
+    loadTile(tile, "png/level-1-tiles.png", "map/level_3.txt", 80, 60);
+
+    Player* player = new Player(32, 32, game, tile);
+    loadPlayer(player);
+    player->set_spawn_point(77, 3);
+
+    SDL_Event e;
+
+    while(game->game_running){
+        SDL_PollEvent(&e);
+        if(e.type == SDL_QUIT) game->game_running = false;
+
+        SDL_RenderClear(game->renderer);
+        SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
+
+        player->handle_event(e);
+
+        game->camera_set(&player->dest);
+
+        tile->render(game->camera);
+        player->render();
+
+        SDL_RenderPresent(game->renderer);
+    }
+}

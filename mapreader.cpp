@@ -237,7 +237,7 @@ LTexture map;
 std::ofstream gFile;
 
 void loadmedia() {
-    map.loadFromFile("png/test.png");
+    map.loadFromFile("png/2.png");
     gFile.open("mapped.txt");
 }
 
@@ -259,17 +259,17 @@ int main(int argc, char* argv[]) {
 
     Uint8 r, g, b;
 
-    for (int i = 0; i < 30; i++) {
-        for (int j = 0; j < 40; j++) {
-            SDL_GetRGB(pixel[40 * i + j], mappingformat, &r, &g, &b);
+    for (int i = 0; i < 60; i++) {
+        for (int j = 0; j < 80; j++) {
+            SDL_GetRGB(pixel[80 * i + j], mappingformat, &r, &g, &b);
             
             if(!b){
                 if(!r){
                     if(!(g/10)) gFile << "0";
-                    gFile << g << "04 ";
+                    gFile << std::to_string(g) << "04 ";
                 } else{
                     if(!(r/10)) gFile << "0";
-                    gFile << g << "03";
+                    gFile << std::to_string(r) << "03 ";
                 }                
             }
 
