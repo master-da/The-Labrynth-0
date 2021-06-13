@@ -31,12 +31,9 @@ struct Player {
             yVel = 0;
         }
     };
-
-
-
-    //walk, attack, idle -each sprite sheet has different numbers of sprites per row and column
+    
     int frame;                            //the sprite from the spritesheet that will be renderer
-    int sprite_per_row[PLAYER_TOTAL_STATI];
+    int sprite_per_row[PLAYER_TOTAL_STATI];//walk, attack, idle -each sprite sheet has different numbers of sprites per row and column
     int sprite_per_col[PLAYER_TOTAL_STATI];
     int slow_factor[PLAYER_TOTAL_STATI];  //player being slowed a little
     int player_status;  //knows if the player is idle, walking or attacking
@@ -62,7 +59,7 @@ struct Player {
         slow_factor[PLAYER_IDLE] = 7;
         slow_factor[PLAYER_MOVE] = 4;
         slow_factor[PLAYER_ATTACK] = 4;
-        slow_factor[PLAYER_HURT] = 2;
+        slow_factor[PLAYER_HURT] = 4;
         slow_factor[PLAYER_DYING] = 4;
 
         sprite_per_row[PLAYER_IDLE] = 6;
@@ -83,6 +80,7 @@ struct Player {
 
         flip = SDL_FLIP_NONE;
     }
+    
     ~Player() {
         stats->xVel = stats->yVel = 0;
     }

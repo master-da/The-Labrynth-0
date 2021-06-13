@@ -1,5 +1,9 @@
 //shift the functions to separate headers as necessary and delete unnecessary comments
+<<<<<<< HEAD
 #include "init.h"
+=======
+
+>>>>>>> Noki
 #define MAX_SOUND_CHANNELS 8  //no of sound effects that can be played at the same time
 
 Mix_Music *music;

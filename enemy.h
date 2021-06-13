@@ -471,6 +471,7 @@ struct Enemy {
             }
         }
         
+        if(player->dead) enemy_status = ENEMY_PATROL;
 
         if (enemy_status == ENEMY_PATROL)
             move();
