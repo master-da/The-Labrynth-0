@@ -1,7 +1,5 @@
 #include "screen.h"
 
-
-
 void UI(Game* game){
 
     SDL_Texture* logo;
@@ -36,6 +34,12 @@ void UI(Game* game){
     button_quit->loadFromFile("png/buttons/button_quit.png");
     button_quit->set_dest(250, 450);
 
+    Background* ui_bg = new Background(game);
+    ui_bg->loadFromFile("png/background/layer_0.png", "png/background/layer_1.png", "png/background/layer_2.png");
+    ui_bg->set_vel();
+    ui_bg->set_rect();
+    ui_bg->set_width();
+
     SDL_Event e;
     while(game->game_running && game->current_screen == game->UI_SCREEN){
         SDL_PollEvent(&e);
@@ -44,13 +48,15 @@ void UI(Game* game){
         SDL_RenderClear(game->renderer);
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
-        SDL_RenderCopy(game->renderer, logo, NULL, &logodest);
 
         button_start->handle_event(e);
         button_load->handle_event(e);
         button_options->handle_event(e);
         buttont_hiscore->handle_event(e);
         button_quit->handle_event(e);
+
+        ui_bg->render();
+        SDL_RenderCopy(game->renderer, logo, NULL, &logodest);
 
         button_start->render();
         button_load->render();

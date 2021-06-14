@@ -6,6 +6,7 @@
 #include "player.h"
 #include "enemy.h"
 #include "button.h"
+#include "background.h"
 
 void UI(Game*);
 
