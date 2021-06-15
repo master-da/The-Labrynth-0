@@ -9,6 +9,7 @@ int main(int argc, char* argv[]) {
 
     Game* game = new Game();
     game->init("a", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0);
+    game->font_loader(46);
     
     while (game->game_running) {
         if(game->current_screen == game->UI_SCREEN) UI(game);

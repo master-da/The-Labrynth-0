@@ -71,16 +71,73 @@ void UI(Game* game){
     logo = NULL;
 }
 
-void quit_screen(){
+void pause_screen(Game* game, int score_){
+
+    Button* button_home = new Button(game->BUTTON_HOME, game->BUTTON_REGULAR, game);
+    button_home->loadFromFile("png/buttons/button_credit.png");
+    button_home->set_dest(50, 200);
+
+    Button* button_continue = new Button(game->BUTTON_CONTINUE, game->BUTTON_REGULAR, game);
+    button_continue->loadFromFile("png/buttons/button_load.png");
+    button_continue->set_dest(450, 200);
+
+    Score* score = new Score(game, score_);
+    score->set_height(100);
+
+    SDL_Event e;
+
+    while(game->game_running && game->game_pause){
+        SDL_PollEvent(&e);
+        if(e.type == SDL_QUIT) game->game_running = false;
+
+        SDL_RenderClear(game->renderer);
+        SDL_SetRenderDrawColor(game->renderer, 255, 255, 255, 255);
+
+        // const Uint8* key = SDL_GetKeyboardState(NULL);
+        // if(key[SDL_SCANCODE_ESCAPE]) game->game_pause = false;
+
+        button_home->handle_event(e);
+        button_continue->handle_event(e);
+
+        score->render();
+        button_home->render();
+        button_continue->render();
+
+        SDL_RenderPresent(game->renderer);
+    }
 
 }
 
-void pause_screen(){
+void level_end_screen(Game* game, int score_, int on_level){
+    Button* button_home = new Button(game->BUTTON_HOME, game->BUTTON_REGULAR, game);
+    button_home->loadFromFile("png/buttons/button_credit.png");
+    button_home->set_dest(50, 450);
 
-}
+    Button* button_next = new Button(game->BUTTON_NEXT, game->BUTTON_REGULAR, game);
+    button_next->loadFromFile("png/buttons/button_load.png");
+    button_next->set_dest(450, 450);
 
-void level_finish_screen(){
+    Score* score = new Score(game, score_);
+    score->set_height(100);
 
+    SDL_Event e;
+
+    while(game->game_running && game->current_screen == on_level){
+        SDL_PollEvent(&e);
+        if(e.type == SDL_QUIT) game->game_running = false;
+
+        SDL_RenderClear(game->renderer);
+        SDL_SetRenderDrawColor(game->renderer, 255, 255, 255, 255);
+        
+        button_home->handle_event(e);
+        button_next->handle_event(e);
+
+        score->render();
+        button_home->render();
+        button_next->render();
+
+        SDL_RenderPresent(game->renderer);
+    }
 }
 
 void level_choice(){
@@ -101,6 +158,7 @@ void loadEnemy(Enemy* enemy_one){
 }
 
 void level_one(Game* game){
+    game->level_end = false;
     game->set_level_dimension(1280, 960);
 
     Tile* tile = new Tile(32, 32, game);
@@ -112,19 +170,26 @@ void level_one(Game* game){
     
     Enemy* enemy = new Enemy(32, 32, game, tile, player);
     loadEnemy(enemy);
-    enemy->set_spawn(7, 11, enemy->LEFT_RIGHT);   
+    enemy->set_spawn(30, 25, enemy->LEFT_RIGHT);   
 
     SDL_Event e;
 
-    while(game->game_running){
+    while(game->game_running && game->current_screen == game->LEVEL_1){
         SDL_PollEvent(&e);
         if(e.type == SDL_QUIT) game->game_running = false;
+
+        const Uint8* key = SDL_GetKeyboardState(NULL);
+        if(key[SDL_SCANCODE_ESCAPE]) game->game_pause = true;
+
+        if(game->game_pause) pause_screen(game, player->stats->score);
 
         SDL_RenderClear(game->renderer);
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
         enemy->handle_event(e);
         player->handle_event(e);
+
+        if(game->level_end) level_end_screen(game, player->stats->score, game->current_screen);
 
         game->camera_set(&player->dest);
 
@@ -137,6 +202,7 @@ void level_one(Game* game){
 }
 
 void level_two(Game* game){
+    game->level_end = false;
     game->set_level_dimension(1280, 960);
 
     Tile* tile = new Tile(32, 32, game);
@@ -156,9 +222,14 @@ void level_two(Game* game){
 
     SDL_Event e;
 
-    while(game->game_running){
+    while(game->game_running && game->current_screen == game->LEVEL_2){
         SDL_PollEvent(&e);
         if(e.type == SDL_QUIT) game->game_running = false;
+
+        const Uint8* key = SDL_GetKeyboardState(NULL);
+        if(key[SDL_SCANCODE_ESCAPE])game->game_pause = true;
+
+        if(game->game_pause) pause_screen(game, player->stats->score);
 
         SDL_RenderClear(game->renderer);
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
@@ -166,6 +237,8 @@ void level_two(Game* game){
         enemy_one->handle_event(e);
         enemy_two->handle_event(e);
         player->handle_event(e);
+
+        if(game->level_end) level_end_screen(game, player->stats->score, game->current_screen);
 
         game->camera_set(&player->dest);
 
@@ -179,6 +252,7 @@ void level_two(Game* game){
 }
 
 void level_three(Game* game){
+    game->level_end = false;
     game->set_level_dimension(2560, 1920);
 
     Tile* tile = new Tile(32, 32, game);
@@ -190,14 +264,21 @@ void level_three(Game* game){
 
     SDL_Event e;
 
-    while(game->game_running){
+    while(game->game_running && game->current_screen == game->LEVEL_3){
         SDL_PollEvent(&e);
         if(e.type == SDL_QUIT) game->game_running = false;
+
+        const Uint8* key = SDL_GetKeyboardState(NULL);
+        if(key[SDL_SCANCODE_ESCAPE])game->game_pause = true;
+
+        if(game->game_pause) pause_screen(game, player->stats->score);
 
         SDL_RenderClear(game->renderer);
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
         player->handle_event(e);
+
+        if(game->level_end) level_end_screen(game, player->stats->score, game->current_screen);
 
         game->camera_set(&player->dest);
 

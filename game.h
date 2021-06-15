@@ -23,6 +23,7 @@ struct Game {
         BUTTON_HISCORE,
         BUTTON_QUIT,
         BUTTON_NEXT,
+        BUTTON_CONTINUE,
         BUTTON_HOME
     };
 
@@ -45,10 +46,14 @@ struct Game {
     SDL_Renderer* renderer;
     Events event;
     SDL_Rect camera;
-    int LEVEL_WIDTH, LEVEL_HEIGHT;  //dimensions of the total level. LEVEL_WIDHT would make more sense i understand
+    TTF_Font* font;
+    SDL_Texture* number[10];
+    SDL_Texture* your_score;
+    int LEVEL_WIDTH, LEVEL_HEIGHT;  //dimensions of the total level.
     int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
     int current_screen;
     bool game_running;
+    bool level_end;
     bool game_pause;
 
     Game() {
@@ -64,7 +69,7 @@ struct Game {
         game_running = true;
         game_pause = false;
 
-        current_screen = UI_SCREEN;
+        current_screen = LEVEL_1;
     }
     
     ~Game() {
@@ -89,11 +94,37 @@ struct Game {
         else
             error_i;
 
+        if(TTF_Init() != -1)
+            printf("TTF initialized\n");
+        else
+            error_t
+
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
         if (renderer)
             printf("Renderer initialised\n");
         else
             error;
+    }
+
+    void font_loader(int font_size_){
+        font = TTF_OpenFont("fonts/Amatic-Bold.ttf", font_size_);
+        if(font == NULL) error_t
+
+        SDL_Surface* tempSurf = TTF_RenderText_Solid(font, "YOUR SCORE", {0, 0, 0});
+        if(tempSurf == NULL) error_t
+        your_score = SDL_CreateTextureFromSurface(renderer, tempSurf);
+
+        font = TTF_OpenFont("fonts/AmaticSC-Regular.ttf", font_size_);
+        if(font == NULL) error_t
+
+        for(int i=0; i<10; i++){
+            tempSurf = TTF_RenderText_Solid(font, std::to_string(i).c_str(), {0, 0, 0});
+            if(tempSurf == NULL) error_t
+            number[i] = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        }
+
+        SDL_FreeSurface(tempSurf);
+        tempSurf = NULL;
     }
 
     void resize_window(int w_, int h_){
@@ -105,14 +136,14 @@ struct Game {
     }
 
     void button_action(int buttonID){
-        printf("here\n");
         if(buttonID == BUTTON_START) current_screen = LEVEL_1;
         if(buttonID == BUTTON_LOAD) current_screen = LEVEL_CHOICE;
         if(buttonID == BUTTON_OPTIONS) current_screen = OPTIONS_SCREEN;
         if(buttonID == BUTTON_HISCORE) current_screen = LOAD_SCREEN;
-        if(buttonID == BUTTON_QUIT) current_screen = QUIT_SCREEN;
+        if(buttonID == BUTTON_QUIT) game_running = false;
+        if(buttonID == BUTTON_CONTINUE) game_pause = false;
         if(buttonID == BUTTON_NEXT) current_screen = current_screen + 1;
-        if(buttonID == BUTTON_HOME) current_screen = UI_SCREEN;
+        if(buttonID == BUTTON_HOME) current_screen = UI_SCREEN, game_pause = false;
     }
 
     //AABB collision detection.
@@ -151,66 +182,39 @@ struct Game {
     }
 };
 
+struct Score{
+    int score;
+    Game* game;
+    int disp_score;
+    int height;
+    SDL_Rect text_rect;
+    SDL_Rect num_rect;
 
-//LTexture. Obsolete. Didn't use it anywhere
+    Score(Game* game_, int score_){
+        game = game_;
+        score = score_;
+        disp_score = 0;
+        height = 100;
+        text_rect = {50, 100, height, 50};
+        num_rect = {600, 100, height, 50};
+    }
 
-//buttons that doesn't work now lol
-// struct Button {
-//     LTexture button[3];
-//     SDL_Rect button_pos;
-//     int button_status;
-//     int buttonID;
-//     enum button_status {
-//         BUTTON_DEFAULT,
-//         BUTTON_HOVER,
-//         BUTTON_PRESSED
-//     };
+    void set_height(int h_){
+        height = h_;
+        text_rect = {50, 100, height, 50};
+        num_rect = {600, 100, height, 50};
+    }
 
-//     Button(int ID) {
-//         buttonID = ID;
-//     }
-//     ~Button() {
-//         button_status = BUTTON_DEFAULT;
-//     }
+    void render(){
+        SDL_RenderCopy(game->renderer, game->your_score, NULL, &text_rect);
 
-//     void loadFromFile(std::string default_path, std::string hover_path, std::string pressed_path) {
-//         button[BUTTON_DEFAULT].loadFromFile(default_path);
-//         button[BUTTON_HOVER].loadFromFile(hover_path);
-//         button[BUTTON_PRESSED].loadFromFile(pressed_path);
-//     }
-
-//     void setDest(int x, int y, int w, int h) {
-//         // button_pos = {x, y, button[BUTTON_DEFAULT].width, button[BUTTON_DEFAULT].height };
-//         button_pos = {x, y, w, h};
-//         for (int i = 0; i < 3; i++) button[i].setDest(x, y, w, h);
-//     }
-
-//     void render(SDL_Event e) {
-//         event_handler(e);
-//         // SDL_RenderCopy( gGame->renderer, button[button_status].texture, NULL, &button_pos );
-//         button[button_status].render();
-//     }
-
-//     void event_handler(SDL_Event e) {
-//         int x, y;
-//         SDL_GetMouseState(&x, &y);
-
-//         if (x < button[BUTTON_DEFAULT].pos.x)
-//             button_status = BUTTON_DEFAULT;
-//         else if (x > button[BUTTON_DEFAULT].pos.x + button[BUTTON_DEFAULT].pos.w)
-//             button_status = BUTTON_DEFAULT;
-//         else if (y < button[BUTTON_DEFAULT].pos.y)
-//             button_status = BUTTON_DEFAULT;
-//         else if (y > button[BUTTON_DEFAULT].pos.y + button[BUTTON_DEFAULT].pos.h)
-//             button_status = BUTTON_DEFAULT;
-
-//         else if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT && e.button.state == SDL_PRESSED) {
-//             button_status = BUTTON_PRESSED;
-//         } else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT && e.button.state == SDL_RELEASED) {
-//             button_status = BUTTON_HOVER;
-//             gGame->button_action(buttonID);
-//         } else
-//             button_status = BUTTON_HOVER;
-//     }
-// };
-
+        int tmp = disp_score;
+        while(tmp){
+            SDL_RenderCopy(game->renderer, game->number[tmp%10], NULL, &num_rect);
+            num_rect.x -= num_rect.w;
+            tmp /= 10;
+        }
+        num_rect.x = 600;
+        if(disp_score<score) disp_score++;
+    }
+};

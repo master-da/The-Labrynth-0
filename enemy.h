@@ -427,7 +427,8 @@ struct Enemy {
 
     void die() {
         frame++;
-        if (frame >= (sprites_per_row[ENEMY_DYING] * sprites_per_col[ENEMY_DYING] * slow_factor[ENEMY_DYING])) dead = true, frame--;
+        if (frame >= (sprites_per_row[ENEMY_DYING] * sprites_per_col[ENEMY_DYING] * slow_factor[ENEMY_DYING]))  
+            dead = true, frame--, player->stats->score += 40;;
     }
 
     //enemy responding to player events.
@@ -451,6 +452,7 @@ struct Enemy {
             if (game->collision(&attack_rect, &dest)) {
 
                 enemy_status = ENEMY_HURT;
+                player->stats->score += 15;
                 frame = 0;
                 stats->hit_point -= player->stats->attack_damage;
 

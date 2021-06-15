@@ -133,11 +133,10 @@ struct Tile {
     }
 
     bool tile_endgame_collission(SDL_Rect* a, int trim) {
-        int topleft = tile_type[(a->y + trim) / tile_height][(a->x + trim) / tile_width] % 100;
-        int topright = tile_type[(a->y + trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
-        int botleft = tile_type[(a->y + a->h - trim) / tile_height][(a->x + trim) / tile_width] % 100;
-        int botright = tile_type[(a->y + a->h - trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
-
+        int topleft = tile_type[(a->y + trim) / tile_height][(a->x + trim) / tile_width];
+        int topright = tile_type[(a->y + trim) / tile_height][(a->x + a->w - trim) / tile_width];
+        int botleft = tile_type[(a->y + a->h - trim) / tile_height][(a->x + trim) / tile_width];
+        int botright = tile_type[(a->y + a->h - trim) / tile_height][(a->x + a->w - trim) / tile_width];
         return (topleft == 9999 ||
                 topright == 9999 ||
                 botleft == 9999 ||

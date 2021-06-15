@@ -19,6 +19,7 @@ struct Player {
         int defence;
         int attack_damage;
         int attack_radius;
+        int score;
         int xVel;
         int yVel;
 
@@ -27,6 +28,7 @@ struct Player {
             defence = 10;
             attack_damage = 15;
             attack_radius = 24;
+            score = 0;
             xVel = 0;
             yVel = 0;
         }
@@ -200,6 +202,8 @@ struct Player {
 
         dest.y += stats->yVel;
         if (dest.y < 0 || dest.y + dest.h > game->LEVEL_HEIGHT || tile->tile_gate_wall_collission(&dest, 7)) dest.y -= stats->yVel;
+
+        if(tile->tile_endgame_collission(&dest, 0)) game->level_end = true, stats->score += 100;
 
         player_center.x = dest.x + dest.w / 2;
         player_center.y = dest.y + dest.h / 2;

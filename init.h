@@ -25,3 +25,5 @@
     { printf("TTF Error in established %d. Error: %s\n", __LINE__, TTF_GetError()); }
 #define error_m \
     { printf("mixer error in established %d. Error: %s\n", __LINE__, MIX_GetError()); }
+#define p(x) \
+    printf("%s\n", x);
