@@ -237,7 +237,7 @@ LTexture map;
 std::ofstream gFile;
 
 void loadmedia() {
-    map.loadFromFile("png/2.png");
+    map.loadFromFile("png/level_1.png");
     gFile.open("mapped.txt");
 }
 
@@ -260,17 +260,17 @@ int main(int argc, char* argv[]) {
 
     Uint8 r, g, b;
 
-    for (int i = 0; i < 60; i++) {
-        for (int j = 0; j < 80; j++) {
-            SDL_GetRGB(pixel[80 * i + j], mappingformat, &r, &g, &b);
+    for (int i = 0; i < 30; i++) {
+        for (int j = 0; j < 40; j++) {
+            SDL_GetRGB(pixel[40 * i + j], mappingformat, &r, &g, &b);
             
             if(!b){
                 if(!r){
                     if(!(g/10)) gFile << "0";
-                    gFile << std::to_string(g) << "04 ";
+                    gFile << std::to_string(g) << "12 ";
                 } else{
                     if(!(r/10)) gFile << "0";
-                    gFile << std::to_string(r) << "03 ";
+                    gFile << std::to_string(r) << "10 ";
                 }                
             }
 
@@ -279,9 +279,9 @@ int main(int argc, char* argv[]) {
             else if (SDL_MapRGB(mappingformat, r, g, b) == wall2)
                 gFile << "0001 ";
             else if (SDL_MapRGB(mappingformat, r, g, b) == walk)
-                gFile << "0002 ";
-            else if (SDL_MapRGB(mappingformat, r, g, b) == bush)
                 gFile << "0005 ";
+            else if (SDL_MapRGB(mappingformat, r, g, b) == bush)
+                gFile << "9998 ";
             else if(SDL_MapRGB(mappingformat, r, g, b) == endgame)
                 gFile << "9999 ";
             

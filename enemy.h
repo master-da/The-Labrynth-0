@@ -23,7 +23,6 @@ struct Enemy {
         int xVel;
         int yVel;
         int vel;
-        int damage;
         int hit_point;
         int hit_point_max;
         int route_length;
@@ -32,7 +31,6 @@ struct Enemy {
 
         Stats(){
             vel = 2;
-            damage = 15;
             hit_point = 35;
             hit_point_max = 35;
             attack_range = 180;
@@ -203,9 +201,7 @@ struct Enemy {
         sprites_per_row[ENEMY_HURT] = 6;
         sprites_per_col[ENEMY_HURT] = 2;
         sprites_per_row[ENEMY_DYING] = 5;
-        sprites_per_col[ENEMY_DYING] = 3;
-
-        
+        sprites_per_col[ENEMY_DYING] = 3;        
 
         line_of_sight.range = stats->attack_range * stats->attack_range;
         enemy_status = ENEMY_PATROL;
@@ -390,7 +386,6 @@ struct Enemy {
             player_damage_event.type = SDL_RegisterEvents(1);
 
             if (player_damage_event.type == (Uint32)-1) error else {
-                    player_damage_event.user.data1 = &stats->damage;
                     player_damage_event.user.code = game->event.player_damaged;
                     SDL_PushEvent(&player_damage_event);
                 }

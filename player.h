@@ -19,34 +19,47 @@ struct Player {
         int defence;
         int attack_damage;
         int attack_radius;
+        bool immunity;
         int score;
         int xVel;
         int yVel;
 
         Player_stats() {
-            hit_points = 20;
+            hit_points = 5;
             defence = 10;
             attack_damage = 15;
+            immunity = false;
             attack_radius = 24;
             score = 0;
             xVel = 0;
             yVel = 0;
         }
     };
+
+    enum collectible_reward{
+        HEALTH_REGEN,
+        BERSERK,
+        IMMUNITY,
+        SCORE,
+        REWARD_TOTAL
+    };
+
+    Tile* tile;
+    Game* game;
+    Player_stats* stats = new Player_stats;
     
     int frame;                            //the sprite from the spritesheet that will be renderer
     int sprite_per_row[PLAYER_TOTAL_STATI];//walk, attack, idle -each sprite sheet has different numbers of sprites per row and column
     int sprite_per_col[PLAYER_TOTAL_STATI];
     int slow_factor[PLAYER_TOTAL_STATI];  //player being slowed a little
     int player_status;  //knows if the player is idle, walking or attacking
+    int reward[REWARD_TOTAL];    
 
     bool dead;  //player can't move if it is in attack animation
 
-    Tile* tile;
-    Game* game;
-    Player_stats* stats = new Player_stats;
-
     SDL_Texture* look[PLAYER_TOTAL_STATI];  //look is player's texture. differnt spritesheet for walking attacking etc
+    SDL_Texture* heart;
+    SDL_Texture* reward_look[REWARD_TOTAL];
     SDL_Rect src;                           //source rectangle from the spritesheet
     SDL_Rect dest;                          //destination rentangle in the map
     SDL_RendererFlip flip;
@@ -81,6 +94,7 @@ struct Player {
         src = {0, 0, w, h};
 
         flip = SDL_FLIP_NONE;
+        for(int i=0; i<REWARD_TOTAL; i++) reward[i] = 0;
     }
     
     ~Player() {
@@ -89,6 +103,12 @@ struct Player {
 
     //loading all the player sprites
     void loadFromFile(std::string idle_path, std::string move_path, std::string attack_path, std::string hurt_path, std::string dying_path) {
+        
+        char berserk[] = "png/berserk.png";
+        char life[] = "png/heart.png";
+        char immunity[] = "png/immunity.png";
+        char score[] = "png/score.png";
+
         SDL_Surface* imgTemp = IMG_Load(idle_path.c_str());
         if (imgTemp)
             printf("Image loaded from \"%s\"\n", idle_path.c_str());
@@ -149,6 +169,31 @@ struct Player {
         else
             error;
 
+        imgTemp = IMG_Load("png/life.png");
+        if (imgTemp == NULL) error_i;
+        heart = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if (heart == NULL) error;
+
+        imgTemp = IMG_Load(life);
+        if (imgTemp == NULL) error_i;
+        reward_look[HEALTH_REGEN] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if (reward_look[HEALTH_REGEN] == NULL) error;
+
+        imgTemp = IMG_Load(berserk);
+        if (imgTemp == NULL) error_i;
+        reward_look[BERSERK] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if (reward_look[BERSERK] == NULL) error;
+
+        imgTemp = IMG_Load(immunity);
+        if (imgTemp == NULL) error_i;
+        reward_look[IMMUNITY] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if (reward_look[IMMUNITY] == NULL) error;
+
+        imgTemp = IMG_Load(score);
+        if (imgTemp == NULL) error_i;
+        reward_look[SCORE] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if (reward_look[SCORE] == NULL) error;
+
         SDL_FreeSurface(imgTemp);
         imgTemp = NULL;
     }
@@ -198,10 +243,12 @@ struct Player {
         frame %= (sprite_per_row[PLAYER_MOVE] * sprite_per_col[PLAYER_MOVE] * slow_factor[PLAYER_MOVE]);
 
         dest.x += stats->xVel;
-        if (dest.x < 0 || dest.x + dest.w > game->LEVEL_WIDTH || tile->tile_gate_wall_collission(&dest, 7)) dest.x -= stats->xVel;
+        if (dest.x < 0 || dest.x + dest.w > game->LEVEL_WIDTH || tile->tile_gate_wall_collission(&dest, 7) || tile->tile_chest_collission(&dest, 7)) 
+            dest.x -= stats->xVel;
 
         dest.y += stats->yVel;
-        if (dest.y < 0 || dest.y + dest.h > game->LEVEL_HEIGHT || tile->tile_gate_wall_collission(&dest, 7)) dest.y -= stats->yVel;
+        if (dest.y < 0 || dest.y + dest.h > game->LEVEL_HEIGHT || tile->tile_gate_wall_collission(&dest, 7) || tile->tile_chest_collission(&dest, 7)) 
+            dest.y -= stats->yVel;
 
         if(tile->tile_endgame_collission(&dest, 0)) game->level_end = true, stats->score += 100;
 
@@ -213,6 +260,13 @@ struct Player {
     void get_damaged() {
         frame++;
         if (frame > (sprite_per_row[PLAYER_HURT] * sprite_per_col[PLAYER_HURT] * slow_factor[PLAYER_HURT])) player_status = PLAYER_IDLE, frame = 0;
+    }
+
+    void get_rewarded(int& reward_){
+        if(reward_ == HEALTH_REGEN) stats->hit_points++;
+        else if(reward_ == BERSERK) stats->attack_damage *= 2;
+        else if(reward_ == IMMUNITY) stats->immunity = true;
+        else if(reward_ == SCORE) stats->score += 120;
     }
 
     void idle() {
@@ -251,13 +305,12 @@ struct Player {
     void handle_event(SDL_Event& e) {
         if (dead) return;
 
-        if (e.user.code == game->event.player_damaged) {
-
-            player_status = PLAYER_HURT, frame = 0;
-            stats->hit_points -= *((int*)e.user.data1);
+        if (e.user.code == game->event.player_damaged) {        
+            stats->hit_points = stats->hit_points - 1 + stats->immunity;
+            if(!stats->immunity) player_status = PLAYER_HURT, frame = 0;
+            else stats->immunity = false;
             game->event.reset(e);
             if (stats->hit_points <= 0) player_status = PLAYER_DYING;
-            
         }
 
         //player cannot move orbe idle when it's in attack, hurt or death animation
@@ -283,15 +336,24 @@ struct Player {
 
             if (key_state[SDL_SCANCODE_E]) {
                 int tile_button_collission = tile->tile_button_collission(&dest);
-
-                //if player collides with a switch and pressed e, corresponding gate will open
                 if (tile_button_collission) {
+
+
                     while (tile->par[tile_button_collission].cnt) {
                         tile->par[tile_button_collission].cnt--;
                         int gate_row = tile->par[tile_button_collission].gate_row[tile->par[tile_button_collission].cnt];
                         int gate_col = tile->par[tile_button_collission].gate_col[tile->par[tile_button_collission].cnt];
-                        tile->tile_type[gate_row][gate_col] = tile->TILE_WALK;
+                        tile->tile_type[gate_row][gate_col] = tile->TILE_WALK0;
+
                     }
+                }
+
+                SDL_Point chest_contact = tile->tile_chest_contact(&dest);
+                if(chest_contact.x != -1){
+                    tile->tile_type[chest_contact.y][chest_contact.x] = tile->TILE_CHEST_OPEN;
+                    int reward_ = rand() % REWARD_TOTAL;
+                    get_rewarded(reward_);
+                    reward[reward_] = 120;
                 }
             }
 
@@ -313,6 +375,24 @@ struct Player {
             die();
     }
 
+    void heart_render(){
+        int temp = stats->hit_points;
+        int padding = 32;
+        for(SDL_Rect heart_dest = {game->RENDER_WIDTH-24 - padding, padding, 24, 24}; temp; temp--, heart_dest.x -= heart_dest.w)
+            SDL_RenderCopy(game->renderer, heart, NULL, &heart_dest);
+    }
+
+    void reward_render(){
+        SDL_Rect reward_dest = {0, 0, 32, 42};
+        for(int i=0; i<REWARD_TOTAL; i++){
+            if(reward[i]){
+                reward[i]--;
+                SDL_RenderCopy(game->renderer, reward_look[i], NULL, &reward_dest);
+                reward_dest.x += 42;
+            }
+        }
+    }
+
     void render() {
         //slowing player a little
         int current_frame = frame / slow_factor[player_status];
@@ -326,6 +406,8 @@ struct Player {
         src.y = (current_frame / sprite_per_row[player_status]) * src.h;
 
         SDL_RenderCopyEx(game->renderer, look[player_status], &src, &dest, 0.0, NULL, flip);
+        if(stats->hit_points)heart_render();
+        reward_render();
 
         //reverting player to it's original location onthe whole map
         dest.x += game->camera.x;

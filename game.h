@@ -32,9 +32,12 @@ struct Game {
         BUTTON_REGULAR
     };
 
+
+
     struct Events{
         Sint32 player_damaged;
         Sint32 enemy_damaged;
+        Sint32 chest_opened;
         Sint32 reset_event;
         
         void reset(SDL_Event& e){
@@ -65,6 +68,7 @@ struct Game {
 
         event.player_damaged = 44;
         event.enemy_damaged = 45;
+        event.chest_opened = 46;
         event.reset_event = 2;
         game_running = true;
         game_pause = false;
@@ -218,3 +222,57 @@ struct Score{
         if(disp_score<score) disp_score++;
     }
 };
+
+// struct Collectible{
+
+//     enum rewards{
+//         HEALTH_REGEN,
+//         BERSERK,
+//         IMMUNITY,
+//         AR_BUFF,
+//         REWARD_TOTAL
+//     };
+
+//     int slow_factor;
+//     int frame;
+//     int* reward;
+//     SDL_Texture* look;
+//     SDL_Rect src;
+//     Game* game = new Game();
+
+//     Collectible(Game* game_){
+//         slow_factor = 4;
+//         frame = 0;
+//         game = game_;
+//         src = {0, 0, 42, 32};
+//         reward = NULL;
+//     }
+
+//     void loadFromFile(){
+
+//         char chest_path[] = "png/chest.png";
+
+//         SDL_Surface* imgTemp = IMG_Load(chest_path);
+//         if(imgTemp == NULL) error_i 
+//         look = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+//         if(look == NULL) error;
+//     }
+
+//     void open_chest(){
+//         frame++;
+//         src.x = (frame / slow_factor) * src.w;
+//         if(frame/slow_factor == 2) *reward = rand() % REWARD_TOTAL;
+//     }
+
+//     void handle_event(SDL_Event e){
+//         if(reward == NULL){
+//             if(e.user.code == game->event.chest_opened) frame = 1;
+//             if(frame) open_chest();
+//         }
+//     }
+    
+//     void render(SDL_Rect* dest){
+//         SDL_RenderCopy(game->renderer, look, &src, dest);
+//     }
+
+// };

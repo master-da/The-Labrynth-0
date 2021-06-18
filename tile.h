@@ -5,10 +5,42 @@
 
 
 struct Tile {
-    SDL_Texture* tileImage;
+
+    enum tile_identity {
+        TILE_WALL0,
+        TILE_WALL1,
+        TILE_WALL2,
+        TILE_WALL3,
+        TILE_WALL4,
+
+        TILE_WALK0,
+        TILE_WALK1,
+        TILE_WALK2,
+        TILE_WALK3,
+        TILE_WALK4,
+
+        TILE_BUTTON_DEFAULT,
+        TILE_BUTTON_TRIGGERED,
+
+        TILE_GATE_DEFAULT,
+        TILE_GATE_OPEN,
+
+        TILE_CHEST_DEFAULT,
+        TILE_CHEST_OPEN,
+
+        TILE_TOTAL
+    };
+
+    SDL_Texture* tile_image;
+    SDL_Texture* chest_image;
+    SDL_Texture* button_image;
+    SDL_Texture* gate_image;
+
+    SDL_Rect tiles[TILE_TOTAL];
 
     int tile_width, tile_height;
     int tile_type[90][120];
+    int slow_factor;
 
     Game* game;
 
@@ -23,44 +55,46 @@ struct Tile {
         }
     } par[10];
 
-    enum tile_identity {
-        TILE_WALL1,
-        TILE_WALL2,
-        TILE_WALK,
-        TILE_BUTTON,
-        TILE_GATE,
-        TILE_TOTAL
-    };
 
-    SDL_Rect tiles[TILE_TOTAL];
-
-    Tile(int w, int h, Game* inpGame) {
+    Tile(int w, int h, Game* game_) {
         tile_width = w;
         tile_height = h;
+        slow_factor = 6;
 
-        game = inpGame;
+        game = game_;
 
         //location of different tile types in my tilesheet. NEEDS TO BE CHANGED FOR NEW TILESHEET
-        tiles[TILE_WALL1] = {32, 0, 32, 32};
-        tiles[TILE_WALL2] = {0, 32, 32, 32};
-        tiles[TILE_WALK] = {0, 0, 32, 32};
-        tiles[TILE_BUTTON] = {64, 0, 32, 32};
-        tiles[TILE_GATE] = {32, 32, 32, 32};
+        tiles[TILE_WALL0] = {32, 0, 32, 32};
+        tiles[TILE_WALL1] = {0, 32, 32, 32};
+
+        tiles[TILE_WALK0] = {0, 0, 32, 32};
+
+        tiles[TILE_BUTTON_DEFAULT] = {64, 0, 32, 32};
+        tiles[TILE_BUTTON_TRIGGERED] = {64, 0, 32, 32};
+
+        tiles[TILE_GATE_DEFAULT] = {32, 32, 32, 32};
+        tiles[TILE_GATE_OPEN] = {32, 32, 32, 32};
+
+        tiles[TILE_CHEST_DEFAULT] = {0, 0, 42, 32};
+        tiles[TILE_CHEST_OPEN] = {42, 0, 42, 32};
+        
     }
 
     //loads tilesheep from file
     void loadImageFromFile(std::string path) {
-        SDL_Surface* imgTemp = IMG_Load(path.c_str());
-        if (imgTemp)
-            printf("Image loaded from \"%s\"\n", path.c_str());
-        else
-            error_i;
 
-        tileImage = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (tileImage)
-            printf("tileimage Loaded\n");
-        else
-            error;
+        char chest_path[] = "png/chest.png";
+
+        SDL_Surface* imgTemp = IMG_Load(path.c_str());
+        if (imgTemp == NULL) error_i;
+        tile_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if (tile_image == NULL) error;
+
+
+        imgTemp = IMG_Load(chest_path);
+        if(imgTemp == NULL) error_i 
+        chest_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if(chest_image == NULL) error;
 
         SDL_FreeSurface(imgTemp);
     }
@@ -78,7 +112,7 @@ struct Tile {
             for (int j = 0; j < w; j++) {
                 map >> tile_type[i][j];
 
-                if (tile_type[i][j] % 100 == 4) {
+                if (tile_type[i][j] % 100 == TILE_GATE_DEFAULT) {
                     int parent_gate = tile_type[i][j] / 100;
                     par[parent_gate].gate_row[par[parent_gate].cnt] = i;
                     par[parent_gate].gate_col[par[parent_gate].cnt++] = j;
@@ -95,10 +129,10 @@ struct Tile {
         int botleft = tile_type[(a->y + a->h - trim) / tile_height][(a->x + trim) / tile_width] % 100;
         int botright = tile_type[(a->y + a->h - trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
 
-        return ((topleft == TILE_WALL1 || topleft == TILE_WALL2 || topleft == TILE_GATE) ||
-                (topright == TILE_WALL1 || topright == TILE_WALL2 || topright == TILE_GATE) ||
-                (botleft == TILE_WALL1 || botleft == TILE_WALL2 || botleft == TILE_GATE) ||
-                (botright == TILE_WALL1 || botright == TILE_WALL2 || botright == TILE_GATE));
+        return ((topleft <= TILE_WALL4 || topleft == TILE_GATE_DEFAULT) ||
+                (topright <= TILE_WALL4 || topright == TILE_GATE_DEFAULT) ||
+                (botleft <= TILE_WALL4 || botleft == TILE_GATE_DEFAULT) ||
+                (botright <= TILE_WALL4 || botright == TILE_GATE_DEFAULT));
     }
 
     //detects and entity's collision with wall. trims the entity's dimensions so it can fit into smaller spaces
@@ -108,24 +142,53 @@ struct Tile {
         int botleft = tile_type[(a->y + a->h - trim) / tile_height][(a->x + trim) / tile_width] % 100;
         int botright = tile_type[(a->y + a->h - trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
 
-        return (topleft <= TILE_WALL2 ||
-                topright <= TILE_WALL2 ||
-                botleft <= TILE_WALL2 ||
-                botright <= TILE_WALL2);
+        return (topleft <= TILE_WALL4 ||
+                topright <= TILE_WALL4 ||
+                botleft <= TILE_WALL4 ||
+                botright <= TILE_WALL4);
+    }
+
+    bool tile_chest_collission(SDL_Rect* a, int trim) {
+        int topleft = tile_type[(a->y + trim) / tile_height][(a->x + trim) / tile_width] % 100;
+        int topright = tile_type[(a->y + trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
+        int botleft = tile_type[(a->y + a->h - trim) / tile_height][(a->x + trim) / tile_width] % 100;
+        int botright = tile_type[(a->y + a->h - trim) / tile_height][(a->x + a->w - trim) / tile_width] % 100;
+
+        return (topleft == TILE_CHEST_DEFAULT || topleft == TILE_CHEST_OPEN ||
+                topright == TILE_CHEST_DEFAULT || topright == TILE_CHEST_OPEN ||
+                botleft == TILE_CHEST_DEFAULT || botleft == TILE_CHEST_OPEN ||
+                botright == TILE_CHEST_DEFAULT || botright == TILE_CHEST_OPEN);
+    }
+
+    SDL_Point tile_chest_contact(SDL_Rect* a){
+        int x = (a->x + a->w / 2) / tile_width;
+        int y = (a->y + a->h / 2) / tile_width;
+
+        // printf("x %d y %d\n", x, y);
+
+        if(tile_type[y][x+1] == TILE_CHEST_DEFAULT) return {x+1, y};
+        else if(tile_type[y][x-1] == TILE_CHEST_DEFAULT) return {x-1, y};
+        else if(tile_type[y+1][x] == TILE_CHEST_DEFAULT) return {x, y+1};
+        else if(tile_type[y-1][x] == TILE_CHEST_DEFAULT) return {x, y-1};
+        else if(tile_type[y+1][x+1] == TILE_CHEST_DEFAULT) return {x+1, y+1};
+        else if(tile_type[y+1][x-1] == TILE_CHEST_DEFAULT) return {x-1, y+1};
+        else if(tile_type[y-1][x+1] == TILE_CHEST_DEFAULT) return {x+1, y-1};
+        else if(tile_type[y-1][x-1] == TILE_CHEST_DEFAULT) return {x-1, y-1};
+        else return {-1, 0};
     }
 
     //checks if an entity is colliding with some button
     int tile_button_collission(SDL_Rect* a) {
-        if (tile_type[a->y / tile_height][a->x / tile_width] % 100 == TILE_BUTTON)
+        if (tile_type[a->y / tile_height][a->x / tile_width] % 100 == TILE_BUTTON_DEFAULT)
             return tile_type[a->y / tile_height][a->x / tile_width] / 100;
 
-        if (tile_type[a->y / tile_height][(a->x + a->w) / tile_width] % 100 == TILE_BUTTON)
+        if (tile_type[a->y / tile_height][(a->x + a->w) / tile_width] % 100 == TILE_BUTTON_DEFAULT)
             return tile_type[a->y / tile_height][(a->x + a->w) / tile_width] / 100;
 
-        if (tile_type[(a->y + a->h) / tile_height][a->x / tile_width] % 100 == TILE_BUTTON)
+        if (tile_type[(a->y + a->h) / tile_height][a->x / tile_width] % 100 == TILE_BUTTON_DEFAULT)
             return tile_type[(a->y + a->h) / tile_height][a->x / tile_width] / 100;
 
-        if (tile_type[(a->y + a->h) / tile_height][(a->x + a->w) / tile_width] % 100 == TILE_BUTTON)
+        if (tile_type[(a->y + a->h) / tile_height][(a->x + a->w) / tile_width] % 100 == TILE_BUTTON_DEFAULT)
             return tile_type[(a->y + a->h) / tile_height][(a->x + a->w) / tile_width] / 100;
 
         else
@@ -159,31 +222,41 @@ struct Tile {
                 int type = tile_type[(int)(y / tile_height)][(int)(x / tile_width)] % 100;
 
                 //renders walkable tile under all tiles. so gates and switches seems like they're on walkable tiles
-                SDL_RenderCopy(game->renderer, tileImage, &tiles[TILE_WALK], &dest);
+                SDL_RenderCopy(game->renderer, tile_image, &tiles[TILE_WALK0], &dest);
 
                 float angle = 0.0;
 
                 //makes sure dark side of the slope tile is facing the walkable tile
                 //NEED TO CHANGE IF USING NEW TEXTUREPACK
-                if (type == TILE_WALL2) {
+                if (type <= TILE_WALL4) {
                     if (tile_type[(int)(y / tile_height)][(int)(x / tile_width) + 1] == TILE_WALL1)
                         angle = 90.0;
                     else if (tile_type[(int)(y / tile_height)][(int)(x / tile_width) - 1] == TILE_WALL1)
                         angle = 270.0;
                     else if (tile_type[(int)(y / tile_height) + 1][(int)(x / tile_width)] == TILE_WALL1)
                         angle = 180.0;
-                }
-                // else if(type == TILE_GATE && tile_type [ (int)(y / tile_height) + 1] [ (int)(x / tile_width) ] <= TILE_WALL2) angle = 90.0;
-                else if (type == TILE_GATE) {
-                    if ((tile_type[y / tile_height + 1][x / tile_width] == TILE_WALL1) ||
-                        (tile_type[y / tile_height + 1][x / tile_width] == TILE_WALL2) ||
-                        (tile_type[y / tile_height + 1][x / tile_width] == TILE_GATE) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_WALL1) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_WALL2) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_GATE)) angle = 90.0;
+                    SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
                 }
 
-                SDL_RenderCopyEx(game->renderer, tileImage, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+                else if(type <= TILE_WALK4)
+                    SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+
+                else if(type <= TILE_BUTTON_TRIGGERED)
+                    SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+
+                else if (type <= TILE_GATE_OPEN) {
+                    if ((tile_type[y / tile_height + 1][x / tile_width] <= TILE_WALL1) ||
+                        (tile_type[y / tile_height + 1][x / tile_width] == TILE_GATE_OPEN) ||
+                        (tile_type[y / tile_height + 1][x / tile_width] == TILE_GATE_DEFAULT) ||
+                        (tile_type[y / tile_height - 1][x / tile_width] <= TILE_WALL1) ||
+                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_GATE_OPEN) ||
+                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_GATE_DEFAULT)) angle = 90.0;
+                    SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+                }
+
+                else if(type <= TILE_CHEST_OPEN){
+                    SDL_RenderCopy(game->renderer, chest_image, &tiles[type], &dest);
+                }
             }
         }
     }
