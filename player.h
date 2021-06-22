@@ -275,19 +275,6 @@ struct Player {
     }
 
     void attack() {
-        if(!frame){
-
-            SDL_Event enemy_damage_event;
-            SDL_memset(&enemy_damage_event, 0, sizeof(enemy_damage_event));
-            enemy_damage_event.type = SDL_RegisterEvents(1);
-
-            if(enemy_damage_event.type == (Uint32)-1) error
-            else {
-                enemy_damage_event.user.code = game->event.enemy_damaged;
-                SDL_PushEvent(&enemy_damage_event);
-            }
-        }
-
         frame++;
         if (frame >= (sprite_per_row[PLAYER_ATTACK] * sprite_per_col[PLAYER_ATTACK] * slow_factor[PLAYER_ATTACK])) {
             frame = 0;
@@ -309,7 +296,6 @@ struct Player {
             stats->hit_points = stats->hit_points - 1 + stats->immunity;
             if(!stats->immunity) player_status = PLAYER_HURT, frame = 0;
             else stats->immunity = false;
-            game->event.reset(e);
             if (stats->hit_points <= 0) player_status = PLAYER_DYING;
         }
 
@@ -338,13 +324,15 @@ struct Player {
                 int tile_button_collission = tile->tile_button_collission(&dest);
                 if (tile_button_collission) {
 
-
                     while (tile->par[tile_button_collission].cnt) {
                         tile->par[tile_button_collission].cnt--;
                         int gate_row = tile->par[tile_button_collission].gate_row[tile->par[tile_button_collission].cnt];
                         int gate_col = tile->par[tile_button_collission].gate_col[tile->par[tile_button_collission].cnt];
-                        tile->tile_type[gate_row][gate_col] = tile->TILE_WALK0;
+                        tile->tile_type[gate_row][gate_col] = tile->TILE_GATE_OPEN;
 
+                        int button_row = tile->par[tile_button_collission].button_row;
+                        int button_col = tile->par[tile_button_collission].button_col;
+                        tile->tile_type[button_row][button_col] = tile->TILE_BUTTON_TRIGGERED;
                     }
                 }
 
@@ -358,8 +346,18 @@ struct Player {
             }
 
             //mousebutton press makes player attack 
-            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT)
+            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT){
                 player_status = PLAYER_ATTACK, frame = 0;
+                SDL_Event enemy_damage_event;
+                SDL_memset(&enemy_damage_event, 0, sizeof(enemy_damage_event));
+                enemy_damage_event.type = SDL_RegisterEvents(1);
+
+                if(enemy_damage_event.type == (Uint32)-1) error
+                else {
+                    enemy_damage_event.user.code = game->event.enemy_damaged;
+                    SDL_PushEvent(&enemy_damage_event);
+                }
+            }
 
         }
 

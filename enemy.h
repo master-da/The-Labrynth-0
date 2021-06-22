@@ -435,15 +435,12 @@ struct Enemy {
         line_of_sight.reset(&player->player_center, &enemy_center);
         
         if (e.user.code == game->event.enemy_damaged) {
-            
-            game->event.reset(e);
 
             SDL_Rect attack_rect;
             if (player->flip == SDL_FLIP_NONE)
                 attack_rect = {player->dest.x + player->dest.w / 2, player->dest.y - player->dest.h / 2, player->dest.w, player->dest.h};
             else if (player->flip == SDL_FLIP_HORIZONTAL)
                 attack_rect = {player->dest.x - player->dest.w / 2, player->dest.y - player->dest.h / 2, player->dest.w, player->dest.h};
-
             if (game->collision(&attack_rect, &dest)) {
 
                 enemy_status = ENEMY_HURT;

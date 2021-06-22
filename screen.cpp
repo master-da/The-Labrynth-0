@@ -108,7 +108,8 @@ void pause_screen(Game* game, int score_){
 
 }
 
-void level_end_screen(Game* game, int score_, int on_level){
+void level_end_screen(Game* game, Player* player_, int on_level){
+    
     Button* button_home = new Button(game->BUTTON_HOME, game->BUTTON_REGULAR, game);
     button_home->loadFromFile("png/buttons/button_credit.png");
     button_home->set_dest(50, 450);
@@ -116,8 +117,9 @@ void level_end_screen(Game* game, int score_, int on_level){
     Button* button_next = new Button(game->BUTTON_NEXT, game->BUTTON_REGULAR, game);
     button_next->loadFromFile("png/buttons/button_load.png");
     button_next->set_dest(450, 450);
+    if(player_->dead) button_next->set_dest(250, 450);
 
-    Score* score = new Score(game, score_);
+    Score* score = new Score(game, player_->stats->score);
     score->set_height(100);
 
     SDL_Event e;
@@ -130,11 +132,11 @@ void level_end_screen(Game* game, int score_, int on_level){
         SDL_SetRenderDrawColor(game->renderer, 255, 255, 255, 255);
         
         button_home->handle_event(e);
-        button_next->handle_event(e);
+        if(!player_->dead) button_next->handle_event(e);
 
         score->render();
         button_home->render();
-        button_next->render();
+        if(!player_->dead) button_next->render();
 
         SDL_RenderPresent(game->renderer);
     }
@@ -144,8 +146,8 @@ void level_choice(){
 
 }
 
-void loadTile(Tile* tile, std::string tile_path, std::string file_path, int level_w, int level_h){
-    tile->loadImageFromFile(tile_path);
+void loadTile(Tile* tile, std::string file_path, int level_w, int level_h){
+    tile->loadImageFromFile();
     tile->loadInfoFromFile(file_path, level_w, level_h);
 }
 
@@ -162,15 +164,19 @@ void level_one(Game* game){
     game->set_level_dimension(1280, 960);
 
     Tile* tile = new Tile(32, 32, game);
-    loadTile(tile, "png/level-1-tiles.png", "map/level_1.txt", 40, 30);
+    loadTile(tile, "map/level_1.txt", 40, 30);
 
     Player* player = new Player(32, 32, game, tile);
     loadPlayer(player);
     player->set_spawn_point(34, 4);
     
-    Enemy* enemy = new Enemy(32, 32, game, tile, player);
-    loadEnemy(enemy);
-    enemy->set_spawn(30, 25, enemy->LEFT_RIGHT);   
+    Enemy* enemy_one = new Enemy(32, 32, game, tile, player);
+    loadEnemy(enemy_one);
+    enemy_one->set_spawn(19, 21, enemy_one->LEFT_RIGHT); 
+
+    Enemy* enemy_two = new Enemy(32, 32, game, tile, player);
+    loadEnemy(enemy_two);
+    enemy_two->set_spawn(8, 8, enemy_two->UP_DOWN);   
 
     SDL_Event e;
 
@@ -186,15 +192,19 @@ void level_one(Game* game){
         SDL_RenderClear(game->renderer);
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
-        enemy->handle_event(e);
+        enemy_one->handle_event(e);
+        enemy_two->handle_event(e);
         player->handle_event(e);
+        game->event.reset(e);
 
-        if(game->level_end) level_end_screen(game, player->stats->score, game->current_screen);
+        if(game->level_end) level_end_screen(game, player, game->current_screen);
+        if(player->dead) level_end_screen(game, player, game->current_screen);
 
         game->camera_set(&player->dest);
 
         tile->render(game->camera);
-        enemy->render(game->camera);
+        enemy_one->render(game->camera);
+        enemy_two->render(game->camera);
         player->render();
 
         SDL_RenderPresent(game->renderer);
@@ -203,22 +213,31 @@ void level_one(Game* game){
 
 void level_two(Game* game){
     game->level_end = false;
-    game->set_level_dimension(1280, 960);
+    game->set_level_dimension(2560, 1920);
 
     Tile* tile = new Tile(32, 32, game);
-    loadTile(tile, "png/level-1-tiles.png", "map/level_2.txt", 40, 30);
+    loadTile(tile, "map/level_2.txt", 80, 60);
 
     Player* player = new Player(32, 32, game, tile);
     loadPlayer(player);
-    player->set_spawn_point(34, 3);
+    player->set_spawn_point(76, 3);
+
 
     Enemy* enemy_one = new Enemy(32, 32, game, tile, player);
     loadEnemy(enemy_one);
-    enemy_one->set_spawn(8, 9, enemy_one->UP_DOWN);   
+    enemy_one->set_spawn(67, 16, enemy_one->UP_DOWN);   
     
     Enemy* enemy_two = new Enemy(32, 32, game, tile, player);
     loadEnemy(enemy_two);
-    enemy_two->set_spawn(18, 21, enemy_two->LEFT_RIGHT);   
+    enemy_two->set_spawn(34, 29, enemy_two->LEFT_RIGHT);  
+
+    Enemy* enemy_three = new Enemy(32, 32, game, tile, player);
+    loadEnemy(enemy_three);
+    enemy_three->set_spawn(35, 43, enemy_three->UP_DOWN);   
+
+    Enemy* enemy_four = new Enemy(32, 32, game, tile, player);
+    loadEnemy(enemy_four);
+    enemy_four->set_spawn(49, 53, enemy_four->UP_DOWN);   
 
     SDL_Event e;
 
@@ -236,15 +255,24 @@ void level_two(Game* game){
 
         enemy_one->handle_event(e);
         enemy_two->handle_event(e);
-        player->handle_event(e);
+        enemy_three->handle_event(e);
+        enemy_four->handle_event(e);
 
-        if(game->level_end) level_end_screen(game, player->stats->score, game->current_screen);
+        player->handle_event(e);
+        game->event.reset(e);
+
+        if(game->level_end) level_end_screen(game, player, game->current_screen);
+        if(player->dead) level_end_screen(game, player, game->current_screen);
 
         game->camera_set(&player->dest);
 
         tile->render(game->camera);
+
         enemy_one->render(game->camera);
         enemy_two->render(game->camera);
+        enemy_three->render(game->camera);
+        enemy_four->render(game->camera);
+        
         player->render();
 
         SDL_RenderPresent(game->renderer);
@@ -253,14 +281,14 @@ void level_two(Game* game){
 
 void level_three(Game* game){
     game->level_end = false;
-    game->set_level_dimension(2560, 1920);
+    game->set_level_dimension(5120, 3840);
 
     Tile* tile = new Tile(32, 32, game);
-    loadTile(tile, "png/level-1-tiles.png", "map/level_3.txt", 80, 60);
+    loadTile(tile, "map/level_3.txt", 160, 120);
 
     Player* player = new Player(32, 32, game, tile);
     loadPlayer(player);
-    player->set_spawn_point(77, 3);
+    player->set_spawn_point(134, 19);
 
     SDL_Event e;
 
@@ -277,8 +305,10 @@ void level_three(Game* game){
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
         player->handle_event(e);
+        game->event.reset(e);
 
-        if(game->level_end) level_end_screen(game, player->stats->score, game->current_screen);
+        if(game->level_end) level_end_screen(game, player, game->current_screen);
+        if(player->dead) level_end_screen(game, player, game->current_screen);
 
         game->camera_set(&player->dest);
 

@@ -8,9 +8,9 @@ struct Tile {
 
     enum tile_identity {
         TILE_WALL0,
-        TILE_WALL1,
+        TILE_TREE0,
         TILE_WALL2,
-        TILE_WALL3,
+        TILE_TREE1,
         TILE_WALL4,
 
         TILE_WALK0,
@@ -39,7 +39,7 @@ struct Tile {
     SDL_Rect tiles[TILE_TOTAL];
 
     int tile_width, tile_height;
-    int tile_type[90][120];
+    int tile_type[150][200];
     int slow_factor;
 
     Game* game;
@@ -48,6 +48,8 @@ struct Tile {
     struct Gate_switch_parent {
         int gate_row[5];
         int gate_col[5];
+        int button_row;
+        int button_col;
         int cnt;  //number of gates associated with switch
 
         Gate_switch_parent() {
@@ -62,17 +64,17 @@ struct Tile {
 
         game = game_;
 
-        //location of different tile types in my tilesheet. NEEDS TO BE CHANGED FOR NEW TILESHEET
-        tiles[TILE_WALL0] = {32, 0, 32, 32};
-        tiles[TILE_WALL1] = {0, 32, 32, 32};
+        for(int i=0; i<5; i++) tiles[i] = {32*i, 0, 32, 32};
+        tiles[TILE_TREE0].h = 42;
+        tiles[TILE_TREE1].h = 44;
+        
+        for(int i=5; i<10; i++) tiles[i] = {32*(i-5), 45, 32, 32};
 
-        tiles[TILE_WALK0] = {0, 0, 32, 32};
+        tiles[TILE_BUTTON_DEFAULT] = {0, 0, 32, 32};
+        tiles[TILE_BUTTON_TRIGGERED] = {32, 0, 32, 32};
 
-        tiles[TILE_BUTTON_DEFAULT] = {64, 0, 32, 32};
-        tiles[TILE_BUTTON_TRIGGERED] = {64, 0, 32, 32};
-
-        tiles[TILE_GATE_DEFAULT] = {32, 32, 32, 32};
-        tiles[TILE_GATE_OPEN] = {32, 32, 32, 32};
+        tiles[TILE_GATE_DEFAULT] = {0, 0, 5, 32};
+        tiles[TILE_GATE_OPEN] = {0, 0, 5, 32};
 
         tiles[TILE_CHEST_DEFAULT] = {0, 0, 42, 32};
         tiles[TILE_CHEST_OPEN] = {42, 0, 42, 32};
@@ -80,11 +82,14 @@ struct Tile {
     }
 
     //loads tilesheep from file
-    void loadImageFromFile(std::string path) {
+    void loadImageFromFile() {
 
+        char tile_path[] = "png/tileset.png";
         char chest_path[] = "png/chest.png";
+        char button_path[] = "png/button.png";
+        char gate_path[] = "png/gate.png";
 
-        SDL_Surface* imgTemp = IMG_Load(path.c_str());
+        SDL_Surface* imgTemp = IMG_Load(tile_path);
         if (imgTemp == NULL) error_i;
         tile_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
         if (tile_image == NULL) error;
@@ -94,6 +99,16 @@ struct Tile {
         if(imgTemp == NULL) error_i 
         chest_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
         if(chest_image == NULL) error;
+
+        imgTemp = IMG_Load(button_path);
+        if(imgTemp == NULL) error_i 
+        button_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if(button_image == NULL) error;
+
+        imgTemp = IMG_Load(gate_path);
+        if(imgTemp == NULL) error_i 
+        gate_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if(gate_image == NULL) error;
 
         SDL_FreeSurface(imgTemp);
     }
@@ -115,6 +130,12 @@ struct Tile {
                     int parent_gate = tile_type[i][j] / 100;
                     par[parent_gate].gate_row[par[parent_gate].cnt] = i;
                     par[parent_gate].gate_col[par[parent_gate].cnt++] = j;
+                } 
+
+                else if (tile_type[i][j] % 100 == TILE_BUTTON_DEFAULT) {
+                    int parent_button = tile_type[i][j] / 100;
+                    par[parent_button].button_row = i;
+                    par[parent_button].button_col = j;
                 }
             }
         }
@@ -218,39 +239,75 @@ struct Tile {
             for (x = camera.x; x <= (camera.x + camera.w + tile_width); x += tile_width, renderX += tile_width) {
                 SDL_Rect dest = {renderX - translateX, renderY - translateY, tile_width, tile_height};
 
-                int type = tile_type[(int)(y / tile_height)][(int)(x / tile_width)] % 100;
+                int row = (int)(y / tile_height);
+                int col = (int)(x / tile_width);
+                int type = tile_type[row][col] % 100;
 
                 //renders walkable tile under all tiles. so gates and switches seems like they're on walkable tiles
                 SDL_RenderCopy(game->renderer, tile_image, &tiles[TILE_WALK0], &dest);
 
                 float angle = 0.0;
 
-                //makes sure dark side of the slope tile is facing the walkable tile
-                //NEED TO CHANGE IF USING NEW TEXTUREPACK
-                if (type <= TILE_WALL4) {
-                    if (tile_type[(int)(y / tile_height)][(int)(x / tile_width) + 1] == TILE_WALL1)
-                        angle = 90.0;
-                    else if (tile_type[(int)(y / tile_height)][(int)(x / tile_width) - 1] == TILE_WALL1)
-                        angle = 270.0;
-                    else if (tile_type[(int)(y / tile_height) + 1][(int)(x / tile_width)] == TILE_WALL1)
-                        angle = 180.0;
+                if(type == TILE_TREE0 || type == TILE_TREE1){
+                    short row_add[] = {1, -1, 0, 0};
+                    short col_add[] = {0, 0, 1, -1};
+
+                    for(int i=0; i<4; i++) 
+                        if(tile_type[row+row_add[i]][col+col_add[i]] >= TILE_WALK0 && tile_type[row+row_add[i]][col+col_add[i]] <= TILE_WALK4){
+                            SDL_RenderCopy(game->renderer, tile_image, &tiles[tile_type[row+row_add[i]][col+col_add[i]]], &dest);
+                            break;
+                        }
+                    SDL_RenderCopy(game->renderer, tile_image, &tiles[type], &dest);
+                }
+
+                if (type == TILE_WALL0) {
+                    if(tile_type[row+1][col] % 100 <= TILE_WALL4 ||
+                    tile_type[row-1][col] % 100 <= TILE_WALL4) angle = 90.0;
                     SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
                 }
+
+                else if(type <= TILE_WALL4){
+                    SDL_RenderCopy(game->renderer, tile_image, &tiles[type], &dest);
+                }                    
 
                 else if(type <= TILE_WALK4)
                     SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
 
-                else if(type <= TILE_BUTTON_TRIGGERED)
-                    SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+                else if(type <= TILE_BUTTON_TRIGGERED){
+
+                    short row_add[] = {1, -1, 0, 0};
+                    short col_add[] = {0, 0, 1, -1};
+
+                    for(int i=0; i<4; i++) 
+                        if(tile_type[row+row_add[i]][col+col_add[i]] >= TILE_WALK0 && tile_type[row+row_add[i]][col+col_add[i]] <= TILE_WALK4){
+                            SDL_RenderCopy(game->renderer, tile_image, &tiles[tile_type[row+row_add[i]][col+col_add[i]]], &dest);
+                            break;
+                        }
+
+                    SDL_RenderCopyEx(game->renderer, button_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+                }
 
                 else if (type <= TILE_GATE_OPEN) {
-                    if ((tile_type[y / tile_height + 1][x / tile_width] <= TILE_WALL1) ||
+                    dest.w = tiles[type].w;
+                    SDL_Point center = {dest.w, dest.h};
+                    if ((tile_type[y / tile_height + 1][x / tile_width] <= TILE_WALL4) ||
                         (tile_type[y / tile_height + 1][x / tile_width] == TILE_GATE_OPEN) ||
                         (tile_type[y / tile_height + 1][x / tile_width] == TILE_GATE_DEFAULT) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] <= TILE_WALL1) ||
+                        (tile_type[y / tile_height - 1][x / tile_width] <= TILE_WALL4) ||
                         (tile_type[y / tile_height - 1][x / tile_width] == TILE_GATE_OPEN) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_GATE_DEFAULT)) angle = 90.0;
-                    SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_GATE_DEFAULT)) angle = 0.0;
+                    else angle = 90.0;
+
+                    if(type == TILE_GATE_OPEN) {
+                        center = {0, 0};
+                        angle = 270*(!angle);
+                        if(tile_type[row][col-1] == type) dest.x += (32-5);
+                        else if(tile_type[row-1][col] == type) dest.y += (32-5);
+                    }
+
+                    SDL_RenderCopyEx(game->renderer, gate_image, &tiles[type], &dest, angle, &center, SDL_FLIP_NONE);
+                    dest.w = 32;
+                    if(type == TILE_GATE_OPEN) dest.x -= (32-5), dest.y -= (32-5);
                 }
 
                 else if(type <= TILE_CHEST_OPEN){

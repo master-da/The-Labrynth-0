@@ -237,7 +237,7 @@ LTexture map;
 std::ofstream gFile;
 
 void loadmedia() {
-    map.loadFromFile("png/level_1.png");
+    map.loadFromFile("png/l3.png");
     gFile.open("mapped.txt");
 }
 
@@ -252,18 +252,30 @@ int main(int argc, char* argv[]) {
     Uint32* pixel = (Uint32*)map.getPixels();
     int pixelcount = (map.getPitch() / 4) * map.getHeight();
 
-    Uint32 wall1 = SDL_MapRGB(mappingformat, 0, 0, 255);
-    Uint32 wall2 = SDL_MapRGB(mappingformat, 128, 0, 128);
-    Uint32 walk = SDL_MapRGB(mappingformat, 255, 255, 255);
-    Uint32 bush = SDL_MapRGB(mappingformat, 64, 128, 128);
-    Uint32 endgame = SDL_MapRGB(mappingformat, 100, 100, 100);
+    const Uint32 wall0 = SDL_MapRGB(mappingformat, 0, 0, 255);
+    const Uint32 tree0 = SDL_MapRGB(mappingformat, 64, 255, 64);
+    const Uint32 wall2 = SDL_MapRGB(mappingformat, 0, 0, 160);
+    const Uint32 tree1 = SDL_MapRGB(mappingformat, 255, 128, 255);
+    const Uint32 wall4 = SDL_MapRGB(mappingformat, 0, 170, 250);
+
+    const Uint32 walk0 = SDL_MapRGB(mappingformat, 255, 255, 255);
+    const Uint32 walk1 = SDL_MapRGB(mappingformat, 195, 195, 195);
+    const Uint32 walk2 = SDL_MapRGB(mappingformat, 64, 128, 64);
+    const Uint32 walk3 = SDL_MapRGB(mappingformat, 128, 128, 64);
+    const Uint32 walk4 = SDL_MapRGB(mappingformat, 150, 100, 100);
+
+    const Uint32 chest = SDL_MapRGB(mappingformat, 255, 128, 128);
+
+    const Uint32 endgame = SDL_MapRGB(mappingformat, 100, 100, 100);
 
     Uint8 r, g, b;
 
-    for (int i = 0; i < 30; i++) {
-        for (int j = 0; j < 40; j++) {
-            SDL_GetRGB(pixel[40 * i + j], mappingformat, &r, &g, &b);
-            
+    for (int i = 0; i < 120; i++) {
+        for (int j = 0; j < 160; j++) {
+            SDL_GetRGB(pixel[160 * i + j], mappingformat, &r, &g, &b);
+
+            // gFile << "i" << std::to_string(i) << "j" << std::to_string(j)<<" ";
+
             if(!b){
                 if(!r){
                     if(!(g/10)) gFile << "0";
@@ -274,16 +286,34 @@ int main(int argc, char* argv[]) {
                 }                
             }
 
-            if (SDL_MapRGB(mappingformat, r, g, b) == wall1)
+            else if (SDL_MapRGB(mappingformat, r, g, b) == wall0)
                 gFile << "0000 ";
-            else if (SDL_MapRGB(mappingformat, r, g, b) == wall2)
+            else if (SDL_MapRGB(mappingformat, r, g, b) == tree0)
                 gFile << "0001 ";
-            else if (SDL_MapRGB(mappingformat, r, g, b) == walk)
+            else if (SDL_MapRGB(mappingformat, r, g, b) == wall2)
+                gFile << "0002 ";
+            else if (SDL_MapRGB(mappingformat, r, g, b) == tree1)
+                gFile << "0003 ";
+            else if (SDL_MapRGB(mappingformat, r, g, b) == wall4)
+                gFile << "0004 ";
+
+            else if (SDL_MapRGB(mappingformat, r, g, b) == walk0)
                 gFile << "0005 ";
-            else if (SDL_MapRGB(mappingformat, r, g, b) == bush)
-                gFile << "9998 ";
+            else if (SDL_MapRGB(mappingformat, r, g, b) == walk1)
+                gFile << "0006 ";
+            else if (SDL_MapRGB(mappingformat, r, g, b) == walk2)
+                gFile << "0007 ";
+            else if (SDL_MapRGB(mappingformat, r, g, b) == walk3)
+                gFile << "0008 ";
+            else if (SDL_MapRGB(mappingformat, r, g, b) == walk4)
+                gFile << "0009 ";
+
+            else if (SDL_MapRGB(mappingformat, r, g, b) == chest)
+                gFile << "0014 ";
+
             else if(SDL_MapRGB(mappingformat, r, g, b) == endgame)
                 gFile << "9999 ";
+            else gFile << "0005 ";
             
         }
         gFile << "\n";

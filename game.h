@@ -73,7 +73,7 @@ struct Game {
         game_running = true;
         game_pause = false;
 
-        current_screen = LEVEL_1;
+        current_screen = UI_SCREEN;
     }
     
     ~Game() {
