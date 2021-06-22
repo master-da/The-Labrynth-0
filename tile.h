@@ -55,7 +55,6 @@ struct Tile {
         }
     } par[10];
 
-
     Tile(int w, int h, Game* game_) {
         tile_width = w;
         tile_height = h;
