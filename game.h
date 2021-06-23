@@ -57,9 +57,12 @@ struct Game {
     TTF_Font* font;
     SDL_Texture* number[10];
     SDL_Texture* your_score;
+
     int LEVEL_WIDTH, LEVEL_HEIGHT;  //dimensions of the total level.
     int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
     int current_screen;
+    int music_volume;
+    int sfx_volume;
     bool game_running;
     bool level_end;
     bool game_pause;
@@ -87,7 +90,7 @@ struct Game {
 
     //main initializer function
     void init(std::string name, bool fullscreen) {
-        if (SDL_Init(SDL_INIT_VIDEO) == 0)
+        if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) == 0)
             printf("SDL Initialised with video\n");
         else
             error;
@@ -107,6 +110,19 @@ struct Game {
             printf("TTF initialized\n");
         else
             error_t
+
+        if((Mix_Init(MIX_INIT_MP3)&MIX_INIT_MP3) == MIX_INIT_MP3)
+            printf("Mixer Initialized with mp3\n");
+        else 
+            error_m
+
+        music_volume = MIX_MAX_VOLUME;
+        sfx_volume = MIX_MAX_VOLUME;
+
+        if(!Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 4096))
+            printf("Audio Opened\n");
+        else 
+            error_m
 
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
         if (renderer)
@@ -179,6 +195,18 @@ struct Game {
         if (camera.y + camera.h > LEVEL_HEIGHT) camera.y = LEVEL_HEIGHT - camera.h;
     }
 
+    void music_volume_coltrol(char action_){
+        if(action_ == 'd') music_volume = music_volume - 16 < 0? 0 : music_volume - 16;
+        else if (action_ == 'i') music_volume = music_volume + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : music_volume + 16;
+        else printf("volume input not recognized\n");
+    }
+
+    void sfx_volume_coltrol(char action_){
+        if(action_ == 'd') sfx_volume = sfx_volume - 16 < 0? 0 : sfx_volume - 16;
+        else if (action_ == 'i') sfx_volume = sfx_volume + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : sfx_volume + 16;
+        else printf("volume input not recognized\n");
+    }
+
     void close() {
         SDL_DestroyWindow(window);
         window = NULL;
@@ -188,6 +216,7 @@ struct Game {
 
         SDL_Quit();
         IMG_Quit();
+        TTF_Quit();
     }
 };
 

@@ -26,7 +26,7 @@ struct Enemy {
         int hit_point;
         int hit_point_max;
         int route_length;
-        Uint32 attack_range;
+        int attack_range;
         Uint32 attack_delay;
 
         Stats(){

@@ -4,20 +4,23 @@
 #include "screen.h"
 #include "game.h"
 
-struct Button{
+struct Button{    
 
-    
-
-    SDL_Texture* look;
     int buttonID;
+    SDL_Texture* look;
     SDL_Rect src;
     SDL_Rect dest;
+
+    Mix_Chunk* click_sound;
 
     Game* game;
 
     Button(int buttonID_, int button_type, Game* game_){
         if(button_type == game->BUTTON_SMALL) src = {0, 0, 70, 70};
         else src = {0, 0, 300, 100};
+
+        click_sound = Mix_LoadWAV("sound/metalClick.wav");
+        if(!click_sound) error_m
 
         buttonID = buttonID_;
         game = game_;
@@ -54,7 +57,10 @@ struct Button{
         SDL_GetMouseState(&x, &y);
         if(mouse_in_button(x, y)) {
             if(e.type == SDL_MOUSEMOTION) src.x = src.w;
-            else if(e.type == SDL_MOUSEBUTTONDOWN) src.x = 2*src.w;
+            else if(e.type == SDL_MOUSEBUTTONDOWN) {
+                src.x = 2*src.w;
+                Mix_PlayChannel(-1, click_sound, 0);
+            }
             else if(src.x == 2*src.w && e.button.state == SDL_RELEASED) game->button_action(buttonID), src.x = 0;
         }
         else src.x = 0;
@@ -62,6 +68,5 @@ struct Button{
 
     void render(){
         SDL_RenderCopy(game->renderer, look, &src, &dest);
-        // printf("dest %d %d %d %d\n", dest.x, dest.y, dest.w, dest.h);
     }
 };

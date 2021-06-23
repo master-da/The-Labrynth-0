@@ -38,6 +38,8 @@ struct Tile {
 
     SDL_Rect tiles[TILE_TOTAL];
 
+    Mix_Chunk* door_open_sound;
+
     int tile_width, tile_height;
     int tile_type[150][200];
     int slow_factor;
@@ -81,6 +83,22 @@ struct Tile {
         
     }
 
+    ~Tile(){
+        SDL_DestroyTexture(tile_image);
+        tile_image = NULL;
+        SDL_DestroyTexture(chest_image);
+        chest_image = NULL;
+        SDL_DestroyTexture(button_image);
+        button_image = NULL;
+        SDL_DestroyTexture(gate_image);
+        gate_image = NULL;
+
+        Mix_FreeChunk(door_open_sound);
+        door_open_sound = NULL;
+        
+        game = NULL;
+    }
+
     //loads tilesheep from file
     void loadImageFromFile() {
 
@@ -88,6 +106,7 @@ struct Tile {
         char chest_path[] = "png/chest.png";
         char button_path[] = "png/button.png";
         char gate_path[] = "png/gate.png";
+        char door_open_sound_path[] = "sound/doorOpen_1.wav";
 
         SDL_Surface* imgTemp = IMG_Load(tile_path);
         if (imgTemp == NULL) error_i;
@@ -111,6 +130,9 @@ struct Tile {
         if(gate_image == NULL) error;
 
         SDL_FreeSurface(imgTemp);
+
+        door_open_sound = Mix_LoadWAV(door_open_sound_path);
+        if(!door_open_sound) error_m
     }
 
     //loads map info. What tile goes where. Which tile from the tilesheet goes where

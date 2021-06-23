@@ -3,7 +3,7 @@
 void UI(Game* game){
 
     SDL_Texture* logo;
-    SDL_Surface* imgTemp = IMG_Load("png/logo2.png");
+    SDL_Surface* imgTemp = IMG_Load("png/logo.png");
     if(imgTemp == NULL) error_i
     logo = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
     if(logo == NULL) error;
@@ -13,7 +13,9 @@ void UI(Game* game){
     SDL_FreeSurface(imgTemp);
     imgTemp = NULL;
 
-
+    Mix_Music* bg_music = Mix_LoadMUS("sound/Enchanted_Festival.mp3");
+    if(!bg_music) error_m
+    
     Button* button_start = new Button(game->BUTTON_START, game->BUTTON_REGULAR, game);
     button_start->loadFromFile("png/buttons/button_start.png");
     button_start->set_dest(250, 150);

@@ -64,6 +64,7 @@ struct Player {
     SDL_Rect dest;                          //destination rentangle in the map
     SDL_RendererFlip flip;
     SDL_Point player_center;                //center of player's body. need it for line of sight
+    Mix_Chunk* walk_sound;
 
     Player(int w, int h, Game* inpGame, Tile* inpTile) {
         frame = 0;
@@ -98,7 +99,25 @@ struct Player {
     }
     
     ~Player() {
-        stats->xVel = stats->yVel = 0;
+        for(int i=0; i<PLAYER_TOTAL_STATI; i++) {
+            SDL_DestroyTexture(look[i]);
+            look[i] = NULL;
+        }
+
+        SDL_DestroyTexture(heart);
+        heart = NULL;
+
+        for(int i=0; i<REWARD_TOTAL; i++){
+            SDL_DestroyTexture(reward_look[i]);
+            reward_look[i] = NULL;
+        }
+
+        Mix_FreeChunk(walk_sound);
+        walk_sound = NULL;
+
+        tile = NULL;
+        game = NULL;
+        stats = NULL;
     }
 
     //loading all the player sprites
@@ -108,6 +127,7 @@ struct Player {
         char life[] = "png/heart.png";
         char immunity[] = "png/immunity.png";
         char score[] = "png/score.png";
+        char walk_sound_path[] = "sound/sfx_step_grass_l.wav";
 
         SDL_Surface* imgTemp = IMG_Load(idle_path.c_str());
         if (imgTemp)
@@ -196,6 +216,9 @@ struct Player {
 
         SDL_FreeSurface(imgTemp);
         imgTemp = NULL;
+
+        walk_sound = Mix_LoadWAV(walk_sound_path);
+        if(!walk_sound) error_m
     }
 
     //only used to check if enemy throwable is colliding with platyer
@@ -239,6 +262,9 @@ struct Player {
 
     //moving player based on input.
     void move() {
+        
+        Mix_PlayChannel(-1, walk_sound, 0);
+
         frame++;
         frame %= (sprite_per_row[PLAYER_MOVE] * sprite_per_col[PLAYER_MOVE] * slow_factor[PLAYER_MOVE]);
 
