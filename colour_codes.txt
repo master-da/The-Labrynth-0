@@ -1,0 +1,43 @@
+*colours in the format r. g, b
+*other than gates and switches, all other blocks have non-zero blue values
+*gates have zero red value and zero blue value
+*switches have zero green value and zero blue value
+*names used in the brackets are same as the names of the files in the drive
+
+
+TILE_WALL0 = 0, 0, 255 (tile 3)
+TILE_WALL1 = 64, 255, 64 (tree 1)
+TILE_WALL2 = 0, 0, 160 (tile 2)
+TILE_WALL3 = 255, 128, 255 (cherry 1)
+TILE_WALL4 = 0, 170, 250 (wotah)
+
+TILE_WALK0 = 255, 255, 255 (base colour)
+TILE_WALK1 = 195, 195, 195 (hitler did nothing wrong)
+TILE_WALK2 = 64, 128, 64 (grass 2)
+TILE_WALK3 = 128, 128, 64 (grass yellow)
+TILE_WALK4 = 150, 100, 100 (grass flower)
+
+TILE_BUTTON_DEFAULT = 10, 10, 10 //no idea what this is
+TILE_BUTTON_TRIGGERED = 11, 11, 11 //no idea what this is
+
+TILE_GATE_DEFAULT = 20, 20, 20 //no idea what this is
+TILE_GATE_OPEN = 22, 22, 22 //no idea what this is
+
+TILE_CHEST_DEFAULT = 255, 128, 128
+TILE_CHEST_OPEN = 255, 155, 155
+
+TILE_TOTAL = 100, 100, 100 //end game tile
+
+
+
+bush = 64, 128, 128
+
+gate1 = 0, 1, 0         switch1 = 1, 0, 0
+gate2 = 0, 2, 0         switch2 = 2, 0, 0
+gate3 = 0, 3, 0         switch3 = 3, 0, 0
+gate4 = 0, 4, 0         switch4 = 4, 0, 0
+gate5 = 0, 5, 0         switch5 = 5, 0, 0
+gate6 = 0, 6, 0         switch6 = 6, 0, 0
+gate7 = 0, 7, 0         switch7 = 7, 0, 0
+gate8 = 0, 8, 0         switch8 = 8, 0, 0
+gate9 = 0, 9, 0         switch9 = 9, 0, 0 //add this in the loop
