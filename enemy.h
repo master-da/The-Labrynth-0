@@ -34,7 +34,7 @@ struct Enemy {
             hit_point = 35;
             hit_point_max = 35;
             attack_range = 180;
-            attack_delay = 4000;
+            attack_delay = 2700;
             route_length = 120;
         }
     };

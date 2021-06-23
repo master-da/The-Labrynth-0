@@ -122,7 +122,8 @@ void level_end_screen(Game* game, Player* player_, int on_level){
     Button* button_next = new Button(game->BUTTON_NEXT, game->BUTTON_REGULAR, game);
     button_next->loadFromFile("png/buttons/continue.png");
     button_next->set_dest(450, 450);
-    if(player_->dead) button_next->set_dest(250, 450);
+
+    if(player_->dead || game->current_screen == game->LEVEL_3) button_home->set_dest(250, 250);
 
     Score* score = new Score(game, player_->stats->score);
     score->set_height(100);
@@ -141,7 +142,7 @@ void level_end_screen(Game* game, Player* player_, int on_level){
 
         score->render();
         button_home->render();
-        if(!player_->dead) button_next->render();
+        if(!player_->dead && game->current_screen != game->LEVEL_3) button_next->render();
 
         SDL_RenderPresent(game->renderer);
     }
