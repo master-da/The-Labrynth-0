@@ -3,7 +3,7 @@
 void UI(Game* game){
 
     SDL_Texture* logo;
-    SDL_Surface* imgTemp = IMG_Load("png/logo.png");
+    SDL_Surface* imgTemp = IMG_Load("png/logo2.png");
     if(imgTemp == NULL) error_i
     logo = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
     if(logo == NULL) error;
@@ -74,11 +74,11 @@ void UI(Game* game){
 void pause_screen(Game* game, int score_){
 
     Button* button_home = new Button(game->BUTTON_HOME, game->BUTTON_REGULAR, game);
-    button_home->loadFromFile("png/buttons/button_credit.png");
+    button_home->loadFromFile("png/buttons/home.png");
     button_home->set_dest(50, 200);
 
     Button* button_continue = new Button(game->BUTTON_CONTINUE, game->BUTTON_REGULAR, game);
-    button_continue->loadFromFile("png/buttons/button_load.png");
+    button_continue->loadFromFile("png/buttons/continue.png");
     button_continue->set_dest(450, 200);
 
     Score* score = new Score(game, score_);
@@ -111,11 +111,11 @@ void pause_screen(Game* game, int score_){
 void level_end_screen(Game* game, Player* player_, int on_level){
     
     Button* button_home = new Button(game->BUTTON_HOME, game->BUTTON_REGULAR, game);
-    button_home->loadFromFile("png/buttons/button_credit.png");
+    button_home->loadFromFile("png/buttons/home.png");
     button_home->set_dest(50, 450);
 
     Button* button_next = new Button(game->BUTTON_NEXT, game->BUTTON_REGULAR, game);
-    button_next->loadFromFile("png/buttons/button_load.png");
+    button_next->loadFromFile("png/buttons/continue.png");
     button_next->set_dest(450, 450);
     if(player_->dead) button_next->set_dest(250, 450);
 

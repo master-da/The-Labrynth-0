@@ -8,7 +8,7 @@
 int main(int argc, char* argv[]) {
 
     Game* game = new Game();
-    game->init("a", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0);
+    game->init("a", 0);
     game->font_loader(46);
     
     while (game->game_running) {
