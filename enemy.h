@@ -157,6 +157,8 @@ struct Enemy {
     int slow_factor[ENEMY_TOTAL];      //slowing enemy a little
     int sprites_per_row[ENEMY_TOTAL];  //enemy has different amount of sprites in each of it's spritesheet
     int sprites_per_col[ENEMY_TOTAL];
+
+    int music_channel;
     
     bool dead;
 
@@ -172,6 +174,9 @@ struct Enemy {
     SDL_Point projectile_center;     //Center of projectile. Obsolete. Don't delete
     Sint32 player_damage_event_code;
 
+    Mix_Chunk* death_sound;
+    Mix_Chunk* shoot_sound ;
+
     LineOfSight line_of_sight;
     Stats* stats = new Stats;
     Projectile* projectile = new Projectile;
@@ -181,6 +186,8 @@ struct Enemy {
         tile = inpTile;
         line_of_sight.tile = inpTile;
         game = inpGame;
+
+        music_channel = 3;
 
         src = {0, 0, w, h};
         dest = {0, 0, w, h};
@@ -218,6 +225,10 @@ struct Enemy {
 
     //loading all the textures for enemy
     void loadFromFile(std::string walk_path, std::string attack_path, std::string hurt_path, std::string dying_path, std::string weapon_path, std::string health_bar_path) {
+
+        char death_sound_path[] = "sound/Death.wav";
+        char shoot_sound_path[] = "sound/Crossbow_Shot.wav";
+
         SDL_Surface* tempImage = IMG_Load(walk_path.c_str());
         if (tempImage == NULL) error_i;
 
@@ -278,6 +289,12 @@ struct Enemy {
 
         SDL_FreeSurface(tempImage);
         tempImage = NULL;
+
+        death_sound = Mix_LoadWAV(death_sound_path);
+        if(!death_sound) error_m
+
+        shoot_sound = Mix_LoadWAV(shoot_sound_path);
+        if(!shoot_sound) error_m
     }
 
     //setting player spawn point
@@ -342,6 +359,9 @@ struct Enemy {
 
     //makes projectile leave enemy body and go for the player. Takes player's pointer as argument
     void launch_projectile() {
+
+        Mix_PlayChannel(game->sound_channel[game->SFX_CHANNEL_2], shoot_sound, 0);
+
         projectile->launched = true;
         projectile_center = enemy_center;
         const int dy = player->player_center.y - enemy_center.y;
@@ -381,14 +401,8 @@ struct Enemy {
 
         //if projectile collides with player, player will soon get damaged.
         if (player->rect_collission(projectile_dest)) {
-            SDL_Event player_damage_event;
-            SDL_memset(&player_damage_event, 0, sizeof(player_damage_event));
-            player_damage_event.type = SDL_RegisterEvents(1);
-
-            if (player_damage_event.type == (Uint32)-1) error else {
-                    player_damage_event.user.code = game->event.player_damaged;
-                    SDL_PushEvent(&player_damage_event);
-                }
+            
+            game->event.create_event(game->event.player_damaged, NULL, NULL);
 
             projectile->launched = false;
             projectile_xPos = 0;
@@ -441,6 +455,7 @@ struct Enemy {
                 attack_rect = {player->dest.x + player->dest.w / 2, player->dest.y - player->dest.h / 2, player->dest.w, player->dest.h};
             else if (player->flip == SDL_FLIP_HORIZONTAL)
                 attack_rect = {player->dest.x - player->dest.w / 2, player->dest.y - player->dest.h / 2, player->dest.w, player->dest.h};
+
             if (game->collision(&attack_rect, &dest)) {
 
                 enemy_status = ENEMY_HURT;
@@ -448,7 +463,10 @@ struct Enemy {
                 frame = 0;
                 stats->hit_point -= player->stats->attack_damage;
 
-                if (stats->hit_point <= 0) enemy_status = ENEMY_DYING, frame = 0;
+                if (stats->hit_point <= 0) {
+                    enemy_status = ENEMY_DYING, frame = 0;
+                    Mix_PlayChannel(game->sound_channel[game->SFX_CHANNEL_2], death_sound, 0);
+                }
             }
         }
         

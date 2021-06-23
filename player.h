@@ -14,6 +14,14 @@ struct Player {
         PLAYER_TOTAL_STATI
     };
 
+    enum collectible_reward{
+        HEALTH_REGEN,
+        BERSERK,
+        IMMUNITY,
+        SCORE,
+        REWARD_TOTAL
+    };
+
     struct Player_stats {
         int hit_points;
         int defence;
@@ -34,14 +42,6 @@ struct Player {
             xVel = 0;
             yVel = 0;
         }
-    };
-
-    enum collectible_reward{
-        HEALTH_REGEN,
-        BERSERK,
-        IMMUNITY,
-        SCORE,
-        REWARD_TOTAL
     };
 
     Tile* tile;
@@ -263,7 +263,11 @@ struct Player {
     //moving player based on input.
     void move() {
         
-        Mix_PlayChannel(-1, walk_sound, 0);
+        static int delay = SDL_GetTicks() - 400;
+        if(SDL_GetTicks() - delay > 400) {
+            delay = SDL_GetTicks();
+            Mix_PlayChannel(game->sound_channel[game->SFX_CHANNEL_1], walk_sound, 0);
+        }
 
         frame++;
         frame %= (sprite_per_row[PLAYER_MOVE] * sprite_per_col[PLAYER_MOVE] * slow_factor[PLAYER_MOVE]);
@@ -348,23 +352,15 @@ struct Player {
 
             if (key_state[SDL_SCANCODE_E]) {
                 int tile_button_collission = tile->tile_button_collission(&dest);
+
                 if (tile_button_collission) {
-
-                    while (tile->par[tile_button_collission].cnt) {
-                        tile->par[tile_button_collission].cnt--;
-                        int gate_row = tile->par[tile_button_collission].gate_row[tile->par[tile_button_collission].cnt];
-                        int gate_col = tile->par[tile_button_collission].gate_col[tile->par[tile_button_collission].cnt];
-                        tile->tile_type[gate_row][gate_col] = tile->TILE_GATE_OPEN;
-
-                        int button_row = tile->par[tile_button_collission].button_row;
-                        int button_col = tile->par[tile_button_collission].button_col;
-                        tile->tile_type[button_row][button_col] = tile->TILE_BUTTON_TRIGGERED;
-                    }
+                    game->event.create_event(game->event.door_opened, &tile_button_collission, NULL);
                 }
 
                 SDL_Point chest_contact = tile->tile_chest_contact(&dest);
                 if(chest_contact.x != -1){
                     tile->tile_type[chest_contact.y][chest_contact.x] = tile->TILE_CHEST_OPEN;
+                    
                     int reward_ = rand() % REWARD_TOTAL;
                     get_rewarded(reward_);
                     reward[reward_] = 120;
@@ -373,16 +369,8 @@ struct Player {
 
             //mousebutton press makes player attack 
             if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT){
-                player_status = PLAYER_ATTACK, frame = 0;
-                SDL_Event enemy_damage_event;
-                SDL_memset(&enemy_damage_event, 0, sizeof(enemy_damage_event));
-                enemy_damage_event.type = SDL_RegisterEvents(1);
-
-                if(enemy_damage_event.type == (Uint32)-1) error
-                else {
-                    enemy_damage_event.user.code = game->event.enemy_damaged;
-                    SDL_PushEvent(&enemy_damage_event);
-                }
+                player_status = PLAYER_ATTACK, frame = 0;                
+                game->event.create_event(game->event.enemy_damaged, NULL, NULL);
             }
 
         }

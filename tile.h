@@ -42,6 +42,7 @@ struct Tile {
 
     int tile_width, tile_height;
     int tile_type[150][200];
+    float angle[150][120];
     int slow_factor;
 
     Game* game;
@@ -148,10 +149,20 @@ struct Tile {
             for (int j = 0; j < w; j++) {
                 map >> tile_type[i][j];
 
-                if (tile_type[i][j] % 100 == TILE_GATE_DEFAULT) {
+                if(tile_type[i][j] == TILE_WALL0){
+                    if(tile_type[i+1][j] == TILE_WALL0 || tile_type[i-1][j] == TILE_WALL0)
+                        angle[i][j] = 90.0;
+                }
+
+                else if (tile_type[i][j] % 100 == TILE_GATE_DEFAULT) {
                     int parent_gate = tile_type[i][j] / 100;
                     par[parent_gate].gate_row[par[parent_gate].cnt] = i;
                     par[parent_gate].gate_col[par[parent_gate].cnt++] = j;
+
+                    if(tile_type[i-1][j] % 100 <= TILE_WALL4 || tile_type[i-1][j] % 100 == TILE_GATE_DEFAULT)
+                        angle[i][j] = 0.0;
+                    else 
+                        angle[i][j] = 90.0;
                 } 
 
                 else if (tile_type[i][j] % 100 == TILE_BUTTON_DEFAULT) {
@@ -159,6 +170,7 @@ struct Tile {
                     par[parent_button].button_row = i;
                     par[parent_button].button_col = j;
                 }
+                else angle[i][j] = 0.0;
             }
         }
         map.close();
@@ -248,6 +260,27 @@ struct Tile {
                 botright == 9999);
     }
 
+    void handle_event(SDL_Event e){
+        if(e.user.code == game->event.door_opened){
+            
+            game->event.reset(e);
+
+            int door_parent = *(int*)(e.user.data1);
+
+            while (par[door_parent].cnt) {
+                par[door_parent].cnt--;
+                int gate_row = par[door_parent].gate_row[par[door_parent].cnt];
+                int gate_col = par[door_parent].gate_col[par[door_parent].cnt];
+                tile_type[gate_row][gate_col] = TILE_GATE_OPEN;
+                angle[gate_row][gate_col] = angle[gate_row][gate_col] == 90? 0 : 270;
+            }
+
+            int button_row = par[door_parent].button_row;
+            int button_col = par[door_parent].button_col;
+            tile_type[button_row][button_col] = TILE_BUTTON_TRIGGERED;
+        }
+    }
+
     //takes camera as argument. Renders all tiles that fit into the camera. Probably renders 1 tile along all directions outside the camera
     void render(SDL_Rect& camera) {
         int x, y;
@@ -268,7 +301,7 @@ struct Tile {
                 //renders walkable tile under all tiles. so gates and switches seems like they're on walkable tiles
                 SDL_RenderCopy(game->renderer, tile_image, &tiles[TILE_WALK0], &dest);
 
-                float angle = 0.0;
+                // float angle = 0.0;
 
                 if(type == TILE_TREE0 || type == TILE_TREE1){
                     short row_add[] = {1, -1, 0, 0};
@@ -283,9 +316,7 @@ struct Tile {
                 }
 
                 if (type == TILE_WALL0) {
-                    if(tile_type[row+1][col] % 100 <= TILE_WALL4 ||
-                    tile_type[row-1][col] % 100 <= TILE_WALL4) angle = 90.0;
-                    SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+                    SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle[row][col], NULL, SDL_FLIP_NONE);
                 }
 
                 else if(type <= TILE_WALL4){
@@ -293,7 +324,7 @@ struct Tile {
                 }                    
 
                 else if(type <= TILE_WALK4)
-                    SDL_RenderCopyEx(game->renderer, tile_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+                    SDL_RenderCopy(game->renderer, tile_image, &tiles[type], &dest);
 
                 else if(type <= TILE_BUTTON_TRIGGERED){
 
@@ -306,28 +337,21 @@ struct Tile {
                             break;
                         }
 
-                    SDL_RenderCopyEx(game->renderer, button_image, &tiles[type], &dest, angle, NULL, SDL_FLIP_NONE);
+                    SDL_RenderCopy(game->renderer, button_image, &tiles[type], &dest);
                 }
 
                 else if (type <= TILE_GATE_OPEN) {
                     dest.w = tiles[type].w;
                     SDL_Point center = {dest.w, dest.h};
-                    if ((tile_type[y / tile_height + 1][x / tile_width] <= TILE_WALL4) ||
-                        (tile_type[y / tile_height + 1][x / tile_width] == TILE_GATE_OPEN) ||
-                        (tile_type[y / tile_height + 1][x / tile_width] == TILE_GATE_DEFAULT) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] <= TILE_WALL4) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_GATE_OPEN) ||
-                        (tile_type[y / tile_height - 1][x / tile_width] == TILE_GATE_DEFAULT)) angle = 0.0;
-                    else angle = 90.0;
+                    
 
                     if(type == TILE_GATE_OPEN) {
                         center = {0, 0};
-                        angle = 270*(!angle);
                         if(tile_type[row][col-1] == type) dest.x += (32-5);
                         else if(tile_type[row-1][col] == type) dest.y += (32-5);
                     }
 
-                    SDL_RenderCopyEx(game->renderer, gate_image, &tiles[type], &dest, angle, &center, SDL_FLIP_NONE);
+                    SDL_RenderCopyEx(game->renderer, gate_image, &tiles[type], &dest, angle[row][col], &center, SDL_FLIP_NONE);
                     dest.w = 32;
                     if(type == TILE_GATE_OPEN) dest.x -= (32-5), dest.y -= (32-5);
                 }

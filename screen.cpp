@@ -15,6 +15,7 @@ void UI(Game* game){
 
     Mix_Music* bg_music = Mix_LoadMUS("sound/Enchanted_Festival.mp3");
     if(!bg_music) error_m
+    Mix_FadeInMusic(bg_music, -1, 3000);
     
     Button* button_start = new Button(game->BUTTON_START, game->BUTTON_REGULAR, game);
     button_start->loadFromFile("png/buttons/button_start.png");
@@ -68,6 +69,8 @@ void UI(Game* game){
 
         SDL_RenderPresent(game->renderer);
     }
+
+    Mix_FadeOutMusic(500);
 
     SDL_DestroyTexture(logo);
     logo = NULL;
@@ -165,6 +168,10 @@ void level_one(Game* game){
     game->level_end = false;
     game->set_level_dimension(1280, 960);
 
+    Mix_Music* lv_music = Mix_LoadMUS("sound/Woodland_Fantasy.mp3");
+    if(!lv_music) error_m
+    Mix_FadeInMusic(lv_music, -1, 1000);
+
     Tile* tile = new Tile(32, 32, game);
     loadTile(tile, "map/level_1.txt", 40, 30);
 
@@ -197,6 +204,7 @@ void level_one(Game* game){
         enemy_one->handle_event(e);
         enemy_two->handle_event(e);
         player->handle_event(e);
+        tile->handle_event(e);
         game->event.reset(e);
 
         if(game->level_end) level_end_screen(game, player, game->current_screen);
@@ -211,11 +219,17 @@ void level_one(Game* game){
 
         SDL_RenderPresent(game->renderer);
     }
+
+    Mix_FadeOutMusic(500);
 }
 
 void level_two(Game* game){
     game->level_end = false;
     game->set_level_dimension(2560, 1920);
+
+    Mix_Music* lv_music = Mix_LoadMUS("sound/Woodland_Fantasy.mp3");
+    if(!lv_music) error_m
+    Mix_FadeInMusic(lv_music, -1, 1000);
 
     Tile* tile = new Tile(32, 32, game);
     loadTile(tile, "map/level_2.txt", 80, 60);
@@ -261,6 +275,7 @@ void level_two(Game* game){
         enemy_four->handle_event(e);
 
         player->handle_event(e);
+        tile->handle_event(e);
         game->event.reset(e);
 
         if(game->level_end) level_end_screen(game, player, game->current_screen);
@@ -279,11 +294,17 @@ void level_two(Game* game){
 
         SDL_RenderPresent(game->renderer);
     }
+    Mix_FadeOutMusic(500);
+
 }
 
 void level_three(Game* game){
     game->level_end = false;
     game->set_level_dimension(5120, 3840);
+
+    Mix_Music* lv_music = Mix_LoadMUS("sound/Woodland_Fantasy.mp3");
+    if(!lv_music) error_m
+    Mix_FadeInMusic(lv_music, -1, 1000);
 
     Tile* tile = new Tile(32, 32, game);
     loadTile(tile, "map/level_3.txt", 160, 120);
@@ -307,6 +328,7 @@ void level_three(Game* game){
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
         player->handle_event(e);
+        tile->handle_event(e);
         game->event.reset(e);
 
         if(game->level_end) level_end_screen(game, player, game->current_screen);
@@ -319,4 +341,5 @@ void level_three(Game* game){
 
         SDL_RenderPresent(game->renderer);
     }
+    Mix_FadeOutMusic(500);
 }

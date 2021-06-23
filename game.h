@@ -31,25 +31,45 @@ struct Game {
         BUTTON_SMALL,
         BUTTON_REGULAR
     };
-
-
-
-    struct Events{
-        Sint32 player_damaged;
-        Sint32 enemy_damaged;
-        Sint32 chest_opened;
-        Sint32 reset_event;
-        
-        void reset(SDL_Event& e){
-            e.user.code = reset_event;
-        }
-    };
+    
     enum tiletypes{
         ACCESSIBLE,
         UNACCESSIBLE
     };
 
+    enum sound_channel_list{
+        MUSIC_CHANNEL,
+        SFX_CHANNEL_1,
+        SFX_CHANNEL_2,
+        TOTAL_CHANNEL
+    };
 
+    struct Events{
+        Sint32 player_damaged;
+        Sint32 enemy_damaged;
+        Sint32 door_opened;
+        Sint32 chest_opened;
+        Sint32 reset_event;
+        
+        void create_event(Sint32 code_, int* data1_, int* data2_){
+            SDL_Event e;
+            SDL_memset(&e, 0, sizeof(e));
+            e.type = SDL_RegisterEvents(1);
+
+            if(e.type == (Uint32)-1) error
+            else {
+                e.user.code = code_;
+                if(data1_ != NULL)e.user.data1 = (int*)data1_;
+                if(data2_ != NULL)e.user.data2 = (int*)data2_;
+                SDL_PushEvent(&e);
+            }
+        }
+
+        void reset(SDL_Event& e){
+            e.user.code = reset_event;
+        }
+    };
+ 
     SDL_Window* window;
     SDL_Renderer* renderer;
     Events event;
@@ -61,8 +81,8 @@ struct Game {
     int LEVEL_WIDTH, LEVEL_HEIGHT;  //dimensions of the total level.
     int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
     int current_screen;
-    int music_volume;
-    int sfx_volume;
+    int sound_channel[TOTAL_CHANNEL];
+    int sound_level[TOTAL_CHANNEL];
     bool game_running;
     bool level_end;
     bool game_pause;
@@ -76,12 +96,21 @@ struct Game {
 
         event.player_damaged = 44;
         event.enemy_damaged = 45;
-        event.chest_opened = 46;
+        event.door_opened = 46;
+        event.chest_opened = 47;
         event.reset_event = 2;
         game_running = true;
         game_pause = false;
 
-        current_screen = UI_SCREEN;
+        sound_channel[MUSIC_CHANNEL] = 1;
+        sound_channel[SFX_CHANNEL_1] = 2;
+        sound_channel[SFX_CHANNEL_2] = 2;
+
+        sound_level[MUSIC_CHANNEL] = MIX_MAX_VOLUME;
+        sound_level[SFX_CHANNEL_1] = MIX_MAX_VOLUME;
+        sound_level[SFX_CHANNEL_2] = MIX_MAX_VOLUME;
+
+        current_screen = LEVEL_1;
     }
     
     ~Game() {
@@ -115,9 +144,6 @@ struct Game {
             printf("Mixer Initialized with mp3\n");
         else 
             error_m
-
-        music_volume = MIX_MAX_VOLUME;
-        sfx_volume = MIX_MAX_VOLUME;
 
         if(!Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 4096))
             printf("Audio Opened\n");
@@ -196,14 +222,22 @@ struct Game {
     }
 
     void music_volume_coltrol(char action_){
-        if(action_ == 'd') music_volume = music_volume - 16 < 0? 0 : music_volume - 16;
-        else if (action_ == 'i') music_volume = music_volume + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : music_volume + 16;
+        if(action_ == 'd') 
+            sound_level[MUSIC_CHANNEL] = sound_level[MUSIC_CHANNEL] - 16 < 0? 0 : sound_level[MUSIC_CHANNEL] - 16;
+        else if (action_ == 'i') 
+            sound_level[MUSIC_CHANNEL] = sound_level[MUSIC_CHANNEL] + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : sound_level[MUSIC_CHANNEL] + 16;
         else printf("volume input not recognized\n");
     }
 
     void sfx_volume_coltrol(char action_){
-        if(action_ == 'd') sfx_volume = sfx_volume - 16 < 0? 0 : sfx_volume - 16;
-        else if (action_ == 'i') sfx_volume = sfx_volume + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : sfx_volume + 16;
+        if(action_ == 'd') {
+            sound_level[SFX_CHANNEL_1] = sound_level[SFX_CHANNEL_1] - 16 < 0? 0 : sound_level[SFX_CHANNEL_1] - 16;
+            sound_level[SFX_CHANNEL_2] = sound_level[SFX_CHANNEL_2] - 16 < 0? 0 : sound_level[SFX_CHANNEL_2] - 16;
+        }
+        else if (action_ == 'i') {
+            sound_level[SFX_CHANNEL_1] = sound_level[SFX_CHANNEL_1] + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : sound_level[SFX_CHANNEL_1] + 16;
+            sound_level[SFX_CHANNEL_2] = sound_level[SFX_CHANNEL_2] + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : sound_level[SFX_CHANNEL_2] + 16;
+        }
         else printf("volume input not recognized\n");
     }
 
