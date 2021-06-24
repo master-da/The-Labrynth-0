@@ -15,12 +15,9 @@ struct Button{
 
     Game* game;
 
-    Button(int buttonID_, int button_type, Game* game_){
-        if(button_type == game->BUTTON_SMALL) src = {0, 0, 70, 70};
-        else src = {0, 0, 300, 100};
-
-        click_sound = Mix_LoadWAV("sound/metalClick.wav");
-        if(!click_sound) error_m
+    Button(int buttonID_, Game* game_){
+        src = {0, 0, 300, 100};
+        dest = {0, 0, 300, 75};
 
         buttonID = buttonID_;
         game = game_;
@@ -39,6 +36,9 @@ struct Button{
 
         SDL_FreeSurface(imgTemp);
         imgTemp = NULL;
+
+        click_sound = Mix_LoadWAV("sound/metalClick.wav");
+        if(!click_sound) error_m
     }
 
     void set_dest(int x, int y){

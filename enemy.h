@@ -187,7 +187,7 @@ struct Enemy {
         line_of_sight.tile = inpTile;
         game = inpGame;
 
-        music_channel = 3;
+        music_channel = game->sound_channel[game->SFX_CHANNEL_2];
 
         src = {0, 0, w, h};
         dest = {0, 0, w, h};
@@ -224,68 +224,51 @@ struct Enemy {
     }
 
     //loading all the textures for enemy
-    void loadFromFile(std::string walk_path, std::string attack_path, std::string hurt_path, std::string dying_path, std::string weapon_path, std::string health_bar_path) {
+    void loadFromFile() {
+
+        char walk_path[] = "png/enemy/animation/walk_enemy.png";
+        char attack_path[] = "png/enemy/animation/attack_enemy.png";
+        char hurt_path[] = "png/enemy/animation/hurt_enemy.png";
+        char dying_path[] = "png/enemy/animation/dying_enemy.png";
+        char weapon_path[] = "png/enemy/weapon_enemy.png";
+        char health_bar_path[] = "png/enemy/health_bar.png";
 
         char death_sound_path[] = "sound/Death.wav";
         char shoot_sound_path[] = "sound/Crossbow_Shot.wav";
 
-        SDL_Surface* tempImage = IMG_Load(walk_path.c_str());
-        if (tempImage == NULL) error_i;
-
+        SDL_Surface* tempImage = IMG_Load(walk_path);
+        if (!tempImage) error_i;
         look[ENEMY_PATROL] = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (look[ENEMY_PATROL])
-            printf("Enemy patrol Texture was loaded from \"%s\"\n", walk_path.c_str());
-        else
-            error;
+        if (!look[ENEMY_PATROL]) error;
         tempImage = NULL;
 
-        tempImage = IMG_Load(attack_path.c_str());
-        if (tempImage == NULL) error_i;
-
+        tempImage = IMG_Load(attack_path);
+        if (!tempImage) error_i
         look[ENEMY_ATTACK] = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (look[ENEMY_ATTACK])
-            printf("Enemy attack Texture was loaded from \"%s\"\n", attack_path.c_str());
-        else
-            error;
+        if (!look[ENEMY_ATTACK]) error;
         tempImage = NULL;
 
-        tempImage = IMG_Load(hurt_path.c_str());
-        if (tempImage == NULL) error_i;
-
+        tempImage = IMG_Load(hurt_path);
+        if (!tempImage) error_i;
         look[ENEMY_HURT] = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (look[ENEMY_HURT])
-            printf("Enemy hurt Texture was loaded from \"%s\"\n", hurt_path.c_str());
-        else
-            error;
+        if (!look[ENEMY_HURT]) error;
         tempImage = NULL;
 
-        tempImage = IMG_Load(dying_path.c_str());
-        if (tempImage == NULL) error_i;
-
+        tempImage = IMG_Load(dying_path);
+        if (!tempImage) error_i;
         look[ENEMY_DYING] = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (look[ENEMY_DYING])
-            printf("Enemy attack Texture was loaded from \"%s\"\n", dying_path.c_str());
-        else
-            error;
+        if (!look[ENEMY_DYING]) error;
         tempImage = NULL;
 
-        tempImage = IMG_Load(weapon_path.c_str());
-        if (tempImage == NULL) error_i;
-
+        tempImage = IMG_Load(weapon_path);
+        if (!tempImage) error_i;
         projectile_look = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (projectile)
-            printf("Enemy weapon was loaded from \"%s\"\n", weapon_path.c_str());
-        else
-            error;
+        if (!projectile_look) error;
 
-        tempImage = IMG_Load(health_bar_path.c_str());
-        if (tempImage == NULL) error_i;
-
+        tempImage = IMG_Load(health_bar_path);
+        if (!tempImage) error_i;
         health_bar = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (projectile)
-            printf("Enemy health bar was loaded from \"%s\"\n", health_bar_path.c_str());
-        else
-            error;
+        if (!health_bar) error;
 
         SDL_FreeSurface(tempImage);
         tempImage = NULL;
@@ -360,7 +343,7 @@ struct Enemy {
     //makes projectile leave enemy body and go for the player. Takes player's pointer as argument
     void launch_projectile() {
 
-        Mix_PlayChannel(game->sound_channel[game->SFX_CHANNEL_2], shoot_sound, 0);
+        Mix_PlayChannel(music_channel, shoot_sound, 0);
 
         projectile->launched = true;
         projectile_center = enemy_center;
@@ -465,7 +448,7 @@ struct Enemy {
 
                 if (stats->hit_point <= 0) {
                     enemy_status = ENEMY_DYING, frame = 0;
-                    Mix_PlayChannel(game->sound_channel[game->SFX_CHANNEL_2], death_sound, 0);
+                    Mix_PlayChannel(music_channel, death_sound, 0);
                 }
             }
         }

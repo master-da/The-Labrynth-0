@@ -9,6 +9,7 @@ struct Game {
         LOAD_SCREEN,
         OPTIONS_SCREEN,
         HISCORE_SCREEN,
+        CREDITS_SCREEN,
         LEVEL_CHOICE,
         LEVEL_1,
         LEVEL_2,
@@ -21,10 +22,18 @@ struct Game {
         BUTTON_LOAD,
         BUTTON_OPTIONS,
         BUTTON_HISCORE,
+        BUTTON_CREDITS,
         BUTTON_QUIT,
         BUTTON_NEXT,
         BUTTON_CONTINUE,
-        BUTTON_HOME
+        BUTTON_HOME,
+        BUTTON_MUSIC_VOL_DOWN,
+        BUTTON_MUSIC_VOL_UP,
+        BUTTON_SFX_VOL_DOWN,
+        BUTTON_SFX_VOL_UP,
+        BUTTON_LEVEL_1,
+        BUTTON_LEVEL_2,
+        BUTTON_LEVEL_3
     };
 
     enum button_size{
@@ -41,6 +50,7 @@ struct Game {
         MUSIC_CHANNEL,
         SFX_CHANNEL_1,
         SFX_CHANNEL_2,
+        SFX_CHANNEL_3,
         TOTAL_CHANNEL
     };
 
@@ -77,6 +87,12 @@ struct Game {
     TTF_Font* font;
     SDL_Texture* number[10];
     SDL_Texture* your_score;
+    SDL_Texture* music_volume;
+    SDL_Texture* sfx_volume;
+    SDL_Texture* created_by;
+    SDL_Texture* noki;
+    SDL_Texture* joyee;
+
 
     int LEVEL_WIDTH, LEVEL_HEIGHT;  //dimensions of the total level.
     int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
@@ -104,13 +120,15 @@ struct Game {
 
         sound_channel[MUSIC_CHANNEL] = 1;
         sound_channel[SFX_CHANNEL_1] = 2;
-        sound_channel[SFX_CHANNEL_2] = 2;
+        sound_channel[SFX_CHANNEL_2] = 3;
+        sound_channel[SFX_CHANNEL_3] = 4;
 
         sound_level[MUSIC_CHANNEL] = MIX_MAX_VOLUME;
         sound_level[SFX_CHANNEL_1] = MIX_MAX_VOLUME;
         sound_level[SFX_CHANNEL_2] = MIX_MAX_VOLUME;
+        sound_level[SFX_CHANNEL_3] = MIX_MAX_VOLUME;
 
-        current_screen = UI_SCREEN;
+        current_screen = CREDITS_SCREEN;
     }
     
     ~Game() {
@@ -157,13 +175,14 @@ struct Game {
             error;
     }
 
-    void font_loader(int font_size_){
+    void text_loader(int font_size_){
         font = TTF_OpenFont("fonts/Amatic-Bold.ttf", font_size_);
         if(font == NULL) error_t
 
         SDL_Surface* tempSurf = TTF_RenderText_Solid(font, "YOUR SCORE", {0, 0, 0});
         if(tempSurf == NULL) error_t
         your_score = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        if(your_score == NULL) error
 
         font = TTF_OpenFont("fonts/AmaticSC-Regular.ttf", font_size_);
         if(font == NULL) error_t
@@ -172,7 +191,33 @@ struct Game {
             tempSurf = TTF_RenderText_Solid(font, std::to_string(i).c_str(), {0, 0, 0});
             if(tempSurf == NULL) error_t
             number[i] = SDL_CreateTextureFromSurface(renderer, tempSurf);
+            if(number[i] == NULL) error
         }
+
+        tempSurf = TTF_RenderText_Solid(font, "MUSIC VOLUME", {227, 150, 62});
+        if(tempSurf == NULL) error_t
+        music_volume = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        if(music_volume == NULL) error
+
+        tempSurf = TTF_RenderText_Solid(font, "SFX VOLUME", {227, 150, 62});
+        if(tempSurf == NULL) error_t
+        sfx_volume = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        if(sfx_volume == NULL) error
+
+        tempSurf = TTF_RenderText_Blended(font, "A WORK OF", {227, 150, 62});
+        if(tempSurf == NULL) error_t
+        created_by = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        if(created_by == NULL) error
+
+        tempSurf = TTF_RenderText_Blended_Wrapped(font, "Mahdi Mohd. Hossain Noki ROLL AE 02", {227, 150, 62}, 360);
+        if(tempSurf == NULL) error_t
+        noki = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        if(noki == NULL) error
+
+        tempSurf = TTF_RenderText_Blended_Wrapped(font, "MOHIMA AHMED JOYEE ROLL ", {227, 150, 62}, 280);
+        if(tempSurf == NULL) error_t
+        joyee = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        if(joyee == NULL) error
 
         SDL_FreeSurface(tempSurf);
         tempSurf = NULL;
@@ -188,13 +233,24 @@ struct Game {
 
     void button_action(int buttonID){
         if(buttonID == BUTTON_START) current_screen = LEVEL_1;
-        if(buttonID == BUTTON_LOAD) current_screen = LEVEL_CHOICE;
-        if(buttonID == BUTTON_OPTIONS) current_screen = OPTIONS_SCREEN;
-        if(buttonID == BUTTON_HISCORE) current_screen = LOAD_SCREEN;
-        if(buttonID == BUTTON_QUIT) game_running = false;
-        if(buttonID == BUTTON_CONTINUE) game_pause = false;
-        if(buttonID == BUTTON_NEXT) current_screen = current_screen + 1;
-        if(buttonID == BUTTON_HOME) current_screen = UI_SCREEN, game_pause = false;
+        else if(buttonID == BUTTON_LOAD) current_screen = LEVEL_CHOICE;
+        else if(buttonID == BUTTON_OPTIONS) current_screen = OPTIONS_SCREEN;
+        else if(buttonID == BUTTON_HISCORE) current_screen = LOAD_SCREEN;
+        else if(buttonID == BUTTON_CREDITS) current_screen = CREDITS_SCREEN;
+        else if(buttonID == BUTTON_QUIT) game_running = false;
+        else if(buttonID == BUTTON_CONTINUE) game_pause = false;
+        else if(buttonID == BUTTON_NEXT) current_screen = current_screen + 1;
+        else if(buttonID == BUTTON_HOME) current_screen = UI_SCREEN, game_pause = false;
+
+        else if(buttonID == BUTTON_MUSIC_VOL_DOWN) music_volume_coltrol('d');
+        else if(buttonID == BUTTON_MUSIC_VOL_UP) music_volume_coltrol('i');
+        else if(buttonID == BUTTON_SFX_VOL_DOWN) sfx_volume_coltrol('d');
+        else if(buttonID == BUTTON_SFX_VOL_UP) sfx_volume_coltrol('i');
+
+        else if(buttonID == BUTTON_LEVEL_1) current_screen = LEVEL_1;
+        else if(buttonID == BUTTON_LEVEL_2) current_screen = LEVEL_2;
+        else if(buttonID == BUTTON_LEVEL_3) current_screen = LEVEL_3;
+
     }
 
     //AABB collision detection.
@@ -227,18 +283,22 @@ struct Game {
         else if (action_ == 'i') 
             sound_level[MUSIC_CHANNEL] = sound_level[MUSIC_CHANNEL] + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : sound_level[MUSIC_CHANNEL] + 16;
         else printf("volume input not recognized\n");
+        Mix_VolumeMusic(sound_level[MUSIC_CHANNEL]);
     }
 
     void sfx_volume_coltrol(char action_){
         if(action_ == 'd') {
             sound_level[SFX_CHANNEL_1] = sound_level[SFX_CHANNEL_1] - 16 < 0? 0 : sound_level[SFX_CHANNEL_1] - 16;
             sound_level[SFX_CHANNEL_2] = sound_level[SFX_CHANNEL_2] - 16 < 0? 0 : sound_level[SFX_CHANNEL_2] - 16;
+            sound_level[SFX_CHANNEL_3] = sound_level[SFX_CHANNEL_3] - 16 < 0? 0 : sound_level[SFX_CHANNEL_3] - 16;
         }
         else if (action_ == 'i') {
             sound_level[SFX_CHANNEL_1] = sound_level[SFX_CHANNEL_1] + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : sound_level[SFX_CHANNEL_1] + 16;
             sound_level[SFX_CHANNEL_2] = sound_level[SFX_CHANNEL_2] + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : sound_level[SFX_CHANNEL_2] + 16;
+            sound_level[SFX_CHANNEL_3] = sound_level[SFX_CHANNEL_3] + 16 > MIX_MAX_VOLUME? MIX_MAX_VOLUME : sound_level[SFX_CHANNEL_3] + 16;
         }
         else printf("volume input not recognized\n");
+        Mix_Volume(-1, sound_level[SFX_CHANNEL_1]);
     }
 
     void close() {
@@ -247,6 +307,28 @@ struct Game {
 
         SDL_DestroyRenderer(renderer);
         renderer = NULL;
+
+        for(int i=0; i<10; i++){
+            SDL_DestroyTexture(number[i]);
+            number[i] = NULL;
+        }
+        SDL_DestroyTexture(your_score);
+        your_score = NULL;
+
+        SDL_DestroyTexture(music_volume);
+        music_volume = NULL;
+
+        SDL_DestroyTexture(sfx_volume);
+        sfx_volume = NULL;
+
+        SDL_DestroyTexture(created_by);
+        created_by = NULL;
+
+        SDL_DestroyTexture(noki);
+        noki = NULL;
+
+        SDL_DestroyTexture(joyee);
+        joyee = NULL;
 
         SDL_Quit();
         IMG_Quit();
@@ -267,21 +349,35 @@ struct Score{
         score = score_;
         disp_score = 0;
         height = 100;
-        text_rect = {50, 100, height, 50};
-        num_rect = {600, 100, height, 50};
+        text_rect = {50, 100, 310, 50};
+        num_rect = {600, 100, 100, 50};
     }
 
     void set_height(int h_){
         height = h_;
-        text_rect = {50, 100, height, 50};
-        num_rect = {600, 100, height, 50};
+        text_rect.y = h_;
+        num_rect.y = h_;
     }
-
+    
     void render(){
         SDL_RenderCopy(game->renderer, game->your_score, NULL, &text_rect);
 
+        int tmp = score;
+        if(!tmp) SDL_RenderCopy(game->renderer, game->number[0], NULL, &num_rect);
+        else while(tmp){
+            SDL_RenderCopy(game->renderer, game->number[tmp%10], NULL, &num_rect);
+            num_rect.x -= num_rect.w;
+            tmp /= 10;
+        }
+        num_rect.x = 600;
+    }
+
+    void render_countup(){
+        SDL_RenderCopy(game->renderer, game->your_score, NULL, &text_rect);
+
         int tmp = disp_score;
-        while(tmp){
+        if(!tmp) SDL_RenderCopy(game->renderer, game->number[0], NULL, &num_rect);
+        else while(tmp){
             SDL_RenderCopy(game->renderer, game->number[tmp%10], NULL, &num_rect);
             num_rect.x -= num_rect.w;
             tmp /= 10;
@@ -291,56 +387,3 @@ struct Score{
     }
 };
 
-// struct Collectible{
-
-//     enum rewards{
-//         HEALTH_REGEN,
-//         BERSERK,
-//         IMMUNITY,
-//         AR_BUFF,
-//         REWARD_TOTAL
-//     };
-
-//     int slow_factor;
-//     int frame;
-//     int* reward;
-//     SDL_Texture* look;
-//     SDL_Rect src;
-//     Game* game = new Game();
-
-//     Collectible(Game* game_){
-//         slow_factor = 4;
-//         frame = 0;
-//         game = game_;
-//         src = {0, 0, 42, 32};
-//         reward = NULL;
-//     }
-
-//     void loadFromFile(){
-
-//         char chest_path[] = "png/chest.png";
-
-//         SDL_Surface* imgTemp = IMG_Load(chest_path);
-//         if(imgTemp == NULL) error_i 
-//         look = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-//         if(look == NULL) error;
-//     }
-
-//     void open_chest(){
-//         frame++;
-//         src.x = (frame / slow_factor) * src.w;
-//         if(frame/slow_factor == 2) *reward = rand() % REWARD_TOTAL;
-//     }
-
-//     void handle_event(SDL_Event e){
-//         if(reward == NULL){
-//             if(e.user.code == game->event.chest_opened) frame = 1;
-//             if(frame) open_chest();
-//         }
-//     }
-    
-//     void render(SDL_Rect* dest){
-//         SDL_RenderCopy(game->renderer, look, &src, dest);
-//     }
-
-// };

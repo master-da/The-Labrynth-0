@@ -44,6 +44,7 @@ struct Tile {
     int tile_type[150][200];
     float angle[150][120];
     int slow_factor;
+    int music_channel;
 
     Game* game;
 
@@ -66,6 +67,8 @@ struct Tile {
         slow_factor = 6;
 
         game = game_;
+
+        music_channel = game->sound_channel[game->SFX_CHANNEL_3];
 
         for(int i=0; i<5; i++) tiles[i] = {32*i, 0, 32, 32};
         tiles[TILE_TREE0].h = 42;
@@ -103,10 +106,10 @@ struct Tile {
     //loads tilesheep from file
     void loadImageFromFile() {
 
-        char tile_path[] = "png/tileset.png";
-        char chest_path[] = "png/chest.png";
-        char button_path[] = "png/button.png";
-        char gate_path[] = "png/gate.png";
+        char tile_path[] = "png/tile/tileset.png";
+        char chest_path[] = "png/tile/chest.png";
+        char button_path[] = "png/tile/button.png";
+        char gate_path[] = "png/tile/gate.png";
         char door_open_sound_path[] = "sound/doorOpen_1.wav";
 
         SDL_Surface* imgTemp = IMG_Load(tile_path);
@@ -263,6 +266,8 @@ struct Tile {
     void handle_event(SDL_Event e){
         if(e.user.code == game->event.door_opened){
             
+            Mix_PlayChannel(music_channel, door_open_sound, 0);
+
             game->event.reset(e);
 
             int door_parent = *(int*)(e.user.data1);

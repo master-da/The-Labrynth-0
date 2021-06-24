@@ -10,6 +10,12 @@
 
 void UI(Game*);
 
+void levels(Game*);
+
+void options(Game*);
+
+void credits(Game*);
+
 void level_one(Game*);
 
 void level_two(Game*);
