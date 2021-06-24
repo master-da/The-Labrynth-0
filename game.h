@@ -110,7 +110,7 @@ struct Game {
         sound_level[SFX_CHANNEL_1] = MIX_MAX_VOLUME;
         sound_level[SFX_CHANNEL_2] = MIX_MAX_VOLUME;
 
-        current_screen = LEVEL_1;
+        current_screen = UI_SCREEN;
     }
     
     ~Game() {

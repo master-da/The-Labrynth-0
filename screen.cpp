@@ -76,6 +76,10 @@ void UI(Game* game){
     logo = NULL;
 }
 
+void load(){
+    
+}
+
 void pause_screen(Game* game, int score_){
 
     Button* button_home = new Button(game->BUTTON_HOME, game->BUTTON_REGULAR, game);
@@ -146,10 +150,6 @@ void level_end_screen(Game* game, Player* player_, int on_level){
 
         SDL_RenderPresent(game->renderer);
     }
-}
-
-void level_choice(){
-
 }
 
 void loadTile(Tile* tile, std::string file_path, int level_w, int level_h){
