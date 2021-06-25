@@ -4,6 +4,7 @@
 
 struct Game {
     
+    //all the screens we are rendering in the game
     enum screens {
         UI_SCREEN,
         LOAD_SCREEN,
@@ -20,6 +21,7 @@ struct Game {
         QUIT_SCREEN
     };
     
+    //all the buttons we are using in the game. Each button has it's work defined
     enum buttonid {
         BUTTON_START,
         BUTTON_LOAD,
@@ -41,16 +43,7 @@ struct Game {
         BUTTON_LEVEL_3
     };
 
-    enum button_size{
-        BUTTON_SMALL,
-        BUTTON_REGULAR
-    };
-    
-    enum tiletypes{
-        ACCESSIBLE,
-        UNACCESSIBLE
-    };
-
+    //channels to play sound on.
     enum sound_channel_list{
         MUSIC_CHANNEL,
         SFX_CHANNEL_1,
@@ -59,6 +52,7 @@ struct Game {
         TOTAL_CHANNEL
     };
 
+    //levels ready 
     enum levels{
         READY_LEVEL_1,
         READY_LEVEL_2,
@@ -66,6 +60,7 @@ struct Game {
         LEVELTOTAL
     };
 
+    //user defined event class. Character and enemy interactions gives rise to events that game processes
     struct Events{
         Sint32 player_damaged;
         Sint32 enemy_damaged;
@@ -73,6 +68,7 @@ struct Game {
         Sint32 chest_opened;
         Sint32 reset_event;
         
+        //creates and event based on action
         void create_event(Sint32 code_, int* data1_, int* data2_){
             SDL_Event e;
             SDL_memset(&e, 0, sizeof(e));
@@ -87,35 +83,36 @@ struct Game {
             }
         }
 
+        //resets user event to default after been used
         void reset(SDL_Event& e){
             e.user.code = reset_event;
         }
     };
  
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    Events event;
-    SDL_Rect camera;
-    TTF_Font* font;
-    SDL_Texture* number[10];
-    SDL_Texture* your_score;
-    SDL_Texture* music_volume;
-    SDL_Texture* sfx_volume;
-    SDL_Texture* window_mode;
-    SDL_Texture* window_fullscreen;
-    SDL_Texture* window_windowed;
+    SDL_Window* window;                 //window that gets initialized and rendered
+    SDL_Renderer* renderer;             //renderer everyone uses
+    Events event;           
+    SDL_Rect camera;                    //part of the map that gets rendered
+    TTF_Font* font;                     //font for the numbers and scores
+    SDL_Texture* number[10];            //all the numbers preloaded
+    SDL_Texture* your_score;            //the text "your score" preloaded
+    SDL_Texture* music_volume;          //the text "music volume" preloaded
+    SDL_Texture* sfx_volume;            //the text "sfx volume" preloaded
+    SDL_Texture* window_mode;           //the text "window mode" preloaded
+    SDL_Texture* window_fullscreen;     //the text "fullscreen" preloaded
+    SDL_Texture* window_windowed;       //the text "windowed" preloaded
 
     SDL_Surface* tmpImg;
 
-    int LEVEL_WIDTH, LEVEL_HEIGHT;  //dimensions of the total level.
-    int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
-    int current_screen;
-    int sound_channel[TOTAL_CHANNEL];
-    int sound_level[TOTAL_CHANNEL];
-    int score[LEVELTOTAL];
-    bool game_running;
-    bool level_end;
-    bool game_pause;
+    int LEVEL_WIDTH, LEVEL_HEIGHT;      //dimensions of the total level.
+    int RENDER_WIDTH, RENDER_HEIGHT;    //dimensions of the camera that will follow player.
+    int current_screen;                 //screen that gets rendered
+    int sound_channel[TOTAL_CHANNEL];   //sound channels mapped
+    int sound_level[TOTAL_CHANNEL];     //sound level in the sound channels mapped
+    int score[LEVELTOTAL];              //score read from saved file
+    bool game_running;                  //whether player quit the game. Game quits is this is false
+    bool level_end;                     //whether a level has ended. Renders level finish screen if this is true
+    bool game_pause;                    //whether a level has paused. Renders level pause screen if this is true
     bool fullscreen;
 
     Game() {
@@ -124,8 +121,9 @@ struct Game {
         fullscreen = 0;
         RENDER_WIDTH = 800;
         RENDER_HEIGHT = 600;
-        camera = {0, 0, RENDER_WIDTH, RENDER_HEIGHT};  //SDL_Rect camera now know what part to render
+        camera = {0, 0, RENDER_WIDTH, RENDER_HEIGHT}; 
 
+        //initializing user defined events
         event.player_damaged = 44;
         event.enemy_damaged = 45;
         event.door_opened = 46;
@@ -134,17 +132,19 @@ struct Game {
         game_running = true;
         game_pause = false;
 
+        //mappint sound channels
         sound_channel[MUSIC_CHANNEL] = 1;
         sound_channel[SFX_CHANNEL_1] = 2;
         sound_channel[SFX_CHANNEL_2] = 3;
         sound_channel[SFX_CHANNEL_3] = 4;
 
+        //setting sound channel volume
         sound_level[MUSIC_CHANNEL] = MIX_MAX_VOLUME;
         sound_level[SFX_CHANNEL_1] = MIX_MAX_VOLUME;
         sound_level[SFX_CHANNEL_2] = MIX_MAX_VOLUME;
         sound_level[SFX_CHANNEL_3] = MIX_MAX_VOLUME;
 
-        read_score();
+        read_score();       //reading score from file
 
         current_screen = UI_SCREEN;
     }
@@ -172,6 +172,7 @@ struct Game {
         if (renderer == NULL) error;
     }
 
+    //returns a texture loaded from a path
     SDL_Texture* texture_loader(char file_path[]){
         SDL_Texture* t;
         tmpImg = IMG_Load(file_path);
@@ -181,6 +182,7 @@ struct Game {
         return t;
     }
 
+    //loads all the preloaded texts with some font size
     void text_loader(int font_size_){
         font = TTF_OpenFont("fonts/Amatic-Bold.ttf", font_size_);
         if(font == NULL) error_t
@@ -229,12 +231,14 @@ struct Game {
         tempSurf = NULL;
     }
 
+    //renders textures loaded with TTF
     void text_render(SDL_Texture* text, int x_, int y_){
         SDL_Rect dest = {x_, y_, 0, 0};
         SDL_QueryTexture(text, NULL, NULL, &dest.w, &dest.h);
         SDL_RenderCopy(renderer, text, NULL, &dest);
     }
 
+    //can resize window to render more of map
     void resize_window(int w_, int h_){
         RENDER_WIDTH = w_;
         RENDER_HEIGHT = h_;
@@ -243,18 +247,21 @@ struct Game {
         SDL_SetWindowSize(window, RENDER_WIDTH, RENDER_HEIGHT);
     }
 
+    //goes into and out of fullscreen
     void toggle_fullscreen(){
         fullscreen = !fullscreen;
         SDL_SetWindowFullscreen(window, fullscreen);
     }
 
+    //reads from files
     void read_score(){
         std::ifstream scoreboard("score/data.score");
         if(scoreboard.fail()) printf("unable to read scoreboard\n");
         for(int i=0; i<LEVELTOTAL; i++) scoreboard >> score[i];
         scoreboard.close();
     }
-
+    
+    //reads into files
     void write_score(){
         std::ofstream scoreboard("score/data.score");
         if(scoreboard.fail()) printf("unable to write into scoreboard\n");
@@ -262,6 +269,7 @@ struct Game {
         scoreboard.close();
     }
 
+    //defines all button actions
     void button_action(int buttonID){
         if(buttonID == BUTTON_START) current_screen = LEVEL_1;
         else if(buttonID == BUTTON_LOAD) current_screen = LEVEL_CHOICE;
@@ -295,6 +303,7 @@ struct Game {
         return 1;
     }
 
+    //level dimention
     void set_level_dimension(int width, int height){
         LEVEL_WIDTH = width;
         LEVEL_HEIGHT = height;
@@ -310,6 +319,7 @@ struct Game {
         if (camera.y + camera.h > LEVEL_HEIGHT) camera.y = LEVEL_HEIGHT - camera.h;
     }
 
+    //controls background music volume
     void music_volume_coltrol(char action_){
         if(action_ == 'd') 
             sound_level[MUSIC_CHANNEL] = sound_level[MUSIC_CHANNEL] - 16 < 0? 0 : sound_level[MUSIC_CHANNEL] - 16;
@@ -319,6 +329,7 @@ struct Game {
         Mix_VolumeMusic(sound_level[MUSIC_CHANNEL]);
     }
 
+    //controls sfx sounds like footstep, door opening etc.
     void sfx_volume_coltrol(char action_){
         if(action_ == 'd') {
             sound_level[SFX_CHANNEL_1] = sound_level[SFX_CHANNEL_1] - 16 < 0? 0 : sound_level[SFX_CHANNEL_1] - 16;
@@ -334,6 +345,7 @@ struct Game {
         Mix_Volume(-1, sound_level[SFX_CHANNEL_1]);
     }
 
+    //frees up memory
     void close() {
         SDL_DestroyWindow(window);
         window = NULL;
@@ -372,6 +384,7 @@ struct Game {
     }
 };
 
+//structure that keeps and renders player's score for levels
 struct Score{
     int score;
     Game* game;

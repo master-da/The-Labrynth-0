@@ -7,10 +7,12 @@
 
 int main(int argc, char* argv[]) {
 
+    //initialize game. All the variables everything else requires initializes with it
     Game* game = new Game();
     game->init("The Labrynth");
     game->text_loader(46);
 
+    //gameloop deciding what screen to render
     while (game->game_running) {
         if(game->current_screen == game->UI_SCREEN) UI(game);
         else if(game->current_screen >= game->INSTRUCTIONS_SCREEN_0 && game->current_screen <= game->INSTRUCTIONS_SCREEN_2) instructions(game);
