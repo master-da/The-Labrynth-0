@@ -33,9 +33,13 @@ void UI(Game* game){
     buttont_hiscore->loadFromFile("png/buttons/hiscore.png");
     buttont_hiscore->set_dest(250, 375);
 
+    Button* button_credits = new Button(game->BUTTON_CREDITS, game);
+    button_credits->loadFromFile("png/buttons/credits.png");
+    button_credits->set_dest(250, 450);
+
     Button* button_quit = new Button(game->BUTTON_QUIT, game);
     button_quit->loadFromFile("png/buttons/quit.png");
-    button_quit->set_dest(250, 450);
+    button_quit->set_dest(250, 525);
 
     Background* ui_bg = new Background(game);
     ui_bg->loadFromFile("png/background/layer_0.png", "png/background/layer_1.png", "png/background/layer_2.png");
@@ -56,6 +60,7 @@ void UI(Game* game){
         button_levels->handle_event(e);
         button_options->handle_event(e);
         buttont_hiscore->handle_event(e);
+        button_credits->handle_event(e);
         button_quit->handle_event(e);
 
         ui_bg->render();
@@ -65,6 +70,7 @@ void UI(Game* game){
         button_levels->render();
         button_options->render();
         buttont_hiscore->render();
+        button_credits->render();
         button_quit->render();
 
         SDL_RenderPresent(game->renderer);
@@ -74,6 +80,54 @@ void UI(Game* game){
 
     SDL_DestroyTexture(logo);
     logo = NULL;
+}
+
+void instructions(Game* game){
+
+    Button* button_home = new Button(game->BUTTON_HOME, game);
+    button_home->loadFromFile("png/buttons/home.png");
+    button_home->set_dest(50, 450);
+
+    Button* button_next = new Button(game->BUTTON_NEXT, game);
+    button_next->loadFromFile("png/buttons/continue.png");
+    button_next->set_dest(450, 450);
+
+    SDL_Texture* instructions;
+    SDL_Surface* imgTemp;
+
+    if(game->current_screen == game->INSTRUCTIONS_SCREEN_0){
+        imgTemp = IMG_Load("png/instructions/");
+        if(imgTemp == NULL) error_i
+    } else {
+        imgTemp = IMG_Load("png/instructions/");
+        if(imgTemp == NULL) error_i
+    }
+
+    instructions = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+    if(instructions == NULL) error
+
+    SDL_FreeSurface(imgTemp);
+    imgTemp = NULL;
+
+    SDL_Event e;
+
+    while(game->game_running && (game->current_screen == game->INSTRUCTIONS_SCREEN_0 || game->current_screen == game->INSTRUCTIONS_SCREEN_1)){
+        SDL_PollEvent(&e);
+        if(e.type == SDL_QUIT) game->game_running = false;
+
+        SDL_RenderClear(game->renderer);
+        SDL_SetRenderDrawColor(game->renderer, 255, 255, 255, 255);
+
+        SDL_RenderCopy(game->renderer, instructions, NULL, NULL);
+
+        button_home->handle_event(e);
+        button_next->handle_event(e);
+
+        button_home->render();
+        button_next->render();
+
+        SDL_RenderPresent(game->renderer);
+    }
 }
 
 void levels(Game* game){
@@ -135,26 +189,38 @@ void options(Game* game){
     Button* music_vol_d = new Button(game->BUTTON_MUSIC_VOL_DOWN, game);
     music_vol_d->loadFromFile("png/options/left.png");
     music_vol_d->src = {0, 0, 36, 100};
-    music_vol_d->dest = {game->RENDER_WIDTH/2, 100, 36, 100};
+    music_vol_d->dest = {game->RENDER_WIDTH/2, 66, 36, 100};
 
     Button* music_vol_i = new Button(game->BUTTON_MUSIC_VOL_UP, game);
     music_vol_i->loadFromFile("png/options/right.png");
     music_vol_i->src = {0, 0, 36, 100};
-    music_vol_i->dest = {game->RENDER_WIDTH-music_vol_i->src.w, 100, 36, 100};
+    music_vol_i->dest = {game->RENDER_WIDTH-music_vol_i->src.w, 66, 36, 100};
 
     Button* sfx_vol_d = new Button(game->BUTTON_SFX_VOL_DOWN, game);
     sfx_vol_d->loadFromFile("png/options/left.png");
     sfx_vol_d->src = {0, 0, 36, 100};
-    sfx_vol_d->dest = {game->RENDER_WIDTH/2, 250, 36, 100};
+    sfx_vol_d->dest = {game->RENDER_WIDTH/2, 170, 36, 100};
 
     Button* sfx_vol_i = new Button(game->BUTTON_SFX_VOL_UP, game);
     sfx_vol_i->loadFromFile("png/options/right.png");
     sfx_vol_i->src = {0, 0, 36, 100};
-    sfx_vol_i->dest = {game->RENDER_WIDTH-sfx_vol_i->src.w, 250, 36, 100};
+    sfx_vol_i->dest = {game->RENDER_WIDTH-sfx_vol_i->src.w, 170, 36, 100};
 
-    SDL_Rect music_vol_dest = {50, 100, 310, 100};
-    SDL_Rect sfx_vol_dest = {50, 250, 310, 100};
+    Button* toggle_window_left = new Button(game->BUTTON_TOGGLE_WINDOW_MODE, game);
+    toggle_window_left->loadFromFile("png/options/left.png");
+    toggle_window_left->src = {0, 0, 36, 100};
+    toggle_window_left->dest = {game->RENDER_WIDTH/2, 280, 36, 100};
+
+    Button* toggle_window_right = new Button(game->BUTTON_TOGGLE_WINDOW_MODE, game);
+    toggle_window_right->loadFromFile("png/options/right.png");
+    toggle_window_right->src = {0, 0, 36, 100};
+    toggle_window_right->dest = {game->RENDER_WIDTH-toggle_window_right->src.w, 280, 36, 100};
+
+    SDL_Rect music_vol_dest = {50, 66, 310, 100};
+    SDL_Rect sfx_vol_dest = {50, 170, 310, 100};
     SDL_Rect mid_dest = {0, 0, 22, 100};
+    SDL_Rect window_mode_out_dest = {50, 280, 310, 100};
+    SDL_Rect window_mode_in_dest = {toggle_window_left->dest.x + toggle_window_left->dest.w + 100, toggle_window_left->dest.y + 21, 0, 0};
 
     SDL_Event e;
 
@@ -169,11 +235,13 @@ void options(Game* game){
         music_vol_d->handle_event(e);
         music_vol_i->handle_event(e);
         sfx_vol_d->handle_event(e);
-        sfx_vol_i->handle_event(e);        
+        sfx_vol_i->handle_event(e);
+        toggle_window_left->handle_event(e);
+        toggle_window_right->handle_event(e);
 
         SDL_RenderCopy(game->renderer, game->music_volume, NULL, &music_vol_dest);
         SDL_RenderCopy(game->renderer, game->sfx_volume, NULL, &sfx_vol_dest);
-        // printf("%d %d %d %d\n", music_vol_dest.x, music_vol_dest.y, music_vol_dest.w, music_vol_dest.h);
+        SDL_RenderCopy(game->renderer, game->window_mode, NULL, &window_mode_out_dest);
 
         button_home->render();
 
@@ -205,41 +273,50 @@ void options(Game* game){
         }
         sfx_vol_i->render();
 
+        toggle_window_left->render();
+        if (game->fullscreen){
+            SDL_QueryTexture(game->window_fullscreen, NULL, NULL, &window_mode_in_dest.w, &window_mode_in_dest.h);
+            SDL_RenderCopy(game->renderer, game->window_fullscreen, NULL, &window_mode_in_dest);
+        } else {
+            SDL_QueryTexture(game->window_windowed, NULL, NULL, &window_mode_in_dest.w, &window_mode_in_dest.h);
+            SDL_RenderCopy(game->renderer, game->window_windowed, NULL, &window_mode_in_dest);
+        }
+        toggle_window_right->render();
+
         SDL_RenderPresent(game->renderer);
     }
 
 }
 
-void credits(Game* game){
+void hiscore(Game* game){
 
-    enum texlist{
-        CREATED_BY,
-        NOKI,
-        JOYEE,
-        TOTAL
-    };
+    game->read_score();
 
     Button* button_home = new Button(game->BUTTON_HOME, game);
     button_home->loadFromFile("png/buttons/home.png");
-    button_home->set_dest(50, 50);
+    button_home->set_dest(50, game->RENDER_HEIGHT-button_home->dest.h-50);
 
-    int w;
-    int h;
+    SDL_Surface* imgTemp = NULL;
+    SDL_Texture* level_text[game->LEVELTOTAL];
+    SDL_Texture* score_text[game->LEVELTOTAL];
+    for(int i=0; i<game->LEVELTOTAL; i++){
+        std::string lv = "LEVEL " + std::to_string(i+1);
+        imgTemp = TTF_RenderText_Solid(game->font, lv.c_str(), {227, 150, 62});
+        if(imgTemp == NULL) error_t
+        level_text[i] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if(level_text[i] == NULL) error        
 
-    SDL_Rect dest[TOTAL];
-
-    SDL_QueryTexture(game->created_by, NULL, NULL, &w, &h);
-    dest[CREATED_BY] = {(game->RENDER_WIDTH-w)/2, 600, w, h};
-
-    SDL_QueryTexture(game->noki, NULL, NULL, &w, &h);
-    dest[NOKI] = {(game->RENDER_WIDTH-w)/2, dest[CREATED_BY].y + 120, w, h};
-
-    SDL_QueryTexture(game->joyee, NULL, NULL, &w, &h);
-    dest[JOYEE] = {(game->RENDER_WIDTH-w)/2, dest[NOKI].y + 120, w, h};
+        imgTemp = TTF_RenderText_Solid(game->font, std::to_string(game->score[i]).c_str(), {227, 150, 62});
+        if(imgTemp == NULL) error_t
+        score_text[i] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if(score_text[i] == NULL) error
+    }
+    SDL_FreeSurface(imgTemp);
+    imgTemp = NULL;
 
     SDL_Event e;
 
-    while(game->game_running && game->current_screen == game->CREDITS_SCREEN){
+    while(game->game_running && game->current_screen == game->HISCORE_SCREEN){
         SDL_PollEvent(&e);
         if(e.type == SDL_QUIT) game->game_running = false;
 
@@ -247,16 +324,56 @@ void credits(Game* game){
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
         button_home->handle_event(e);
-
+        
+        for(int i=0; i<game->LEVELTOTAL; i++){
+            game->text_render(level_text[i], 20, 75 * (i+1));
+            game->text_render(score_text[i], game->RENDER_WIDTH/2 + 20, 75 * (i+1));
+        }
         button_home->render();
 
-        SDL_RenderCopy(game->renderer, game->created_by, NULL, &dest[CREATED_BY]);
-        SDL_RenderCopy(game->renderer, game->noki, NULL, &dest[NOKI]);
-        SDL_RenderCopy(game->renderer, game->joyee, NULL, &dest[JOYEE]);
+        SDL_RenderPresent(game->renderer);
+    }
+}
 
-        dest[CREATED_BY].y = dest[CREATED_BY].y - 1 < 200 ? dest[CREATED_BY].y : dest[CREATED_BY].y - 1;
-        dest[NOKI].y = dest[NOKI].y - 1 < 320 ? dest[NOKI].y : dest[NOKI].y - 1;
-        dest[JOYEE].y = dest[JOYEE].y - 1 < 440 ? dest[JOYEE].y : dest[JOYEE].y - 1;
+void credits(Game* game){
+
+    int line_spacing = 36;
+    int paragraph_spacing = 42;
+
+    SDL_Texture* textwall[7];
+    SDL_Rect dest[7];
+
+    char text[7][35] = {"A WORK OF", "MAHDI MOHAMMED HOSSAIN NOKI", "ROLL AE 02", "MOHIMA AHMED JOYEE", "ROLL", "COMPUTER SCIENCE AND ENGINEERING", "UNIVERSITY OF DHAKA"};
+
+    SDL_Surface* imgTemp = NULL;
+    int w, h;
+
+    for(int i=0; i<7; i++){
+        imgTemp = TTF_RenderText_Blended(game->font, text[i], {227, 150, 62});
+        if(imgTemp == NULL) error_t
+        textwall[i] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+        if(textwall[i] == NULL) error
+
+        SDL_QueryTexture(textwall[i], NULL, NULL, &w, &h);
+        dest[i] = {(game->RENDER_WIDTH-w)/2, i==0?game->RENDER_HEIGHT:dest[i-1].y+dest[i-1].h+paragraph_spacing, w, h};
+        if(text[i][0] == 'R' || text[i][0] == 'U') dest[i].y = dest[i-1].y + line_spacing;
+    }
+    SDL_FreeSurface(imgTemp);
+    imgTemp = NULL;
+
+    SDL_Event e;
+
+    while(game->game_running && game->current_screen == game->CREDITS_SCREEN){
+        SDL_PollEvent(&e);
+        if(e.type == SDL_QUIT) game->game_running = false;
+        else if(e.type == SDL_KEYUP || e.type == SDL_MOUSEBUTTONUP) game->current_screen = game->UI_SCREEN;
+
+        SDL_RenderClear(game->renderer);
+        SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
+
+        for(int i=0; i<7; i++) SDL_RenderCopy(game->renderer, textwall[i], NULL, &dest[i]);
+
+        for(int i=0; dest[0].y >= 74 && i<7; i++) dest[i].y--;
 
         SDL_RenderPresent(game->renderer);
     }
@@ -299,6 +416,11 @@ void pause_screen(Game* game, int score_){
 
 void level_end_screen(Game* game, Player* player_, int on_level){
     
+    if(player_->stats->score > game->score[on_level - game->LEVEL_1]){
+        game->score[on_level - game->LEVEL_1] = player_->stats->score;
+        game->write_score();
+    }
+
     Button* button_home = new Button(game->BUTTON_HOME, game);
     button_home->loadFromFile("png/buttons/home.png");
     button_home->set_dest(50, 450);
@@ -307,7 +429,7 @@ void level_end_screen(Game* game, Player* player_, int on_level){
     button_next->loadFromFile("png/buttons/continue.png");
     button_next->set_dest(450, 450);
 
-    if(player_->dead || game->current_screen == game->LEVEL_3) button_home->set_dest(250, 250);
+    if(player_->dead) button_home->set_dest(250, 250);
 
     Score* score = new Score(game, player_->stats->score);
     score->set_height(100);
@@ -326,7 +448,7 @@ void level_end_screen(Game* game, Player* player_, int on_level){
 
         score->render_countup();
         button_home->render();
-        if(!player_->dead && game->current_screen != game->LEVEL_3) button_next->render();
+        if(!player_->dead) button_next->render();
 
         SDL_RenderPresent(game->renderer);
     }

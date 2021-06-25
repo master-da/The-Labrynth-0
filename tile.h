@@ -143,10 +143,7 @@ struct Tile {
     void loadInfoFromFile(std::string path, int w, int h) {
         std::ifstream map(path);
 
-        if (!map.fail())
-            printf("map loaded from path \"%s\"\n", path.c_str());
-        else
-            printf("Failed to load map\n");
+        if (map.fail()) printf("Failed to load map\n");
 
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {

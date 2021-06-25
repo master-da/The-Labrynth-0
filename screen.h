@@ -14,6 +14,8 @@ void levels(Game*);
 
 void options(Game*);
 
+void hiscore(Game*);
+
 void credits(Game*);
 
 void level_one(Game*);

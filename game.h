@@ -9,11 +9,13 @@ struct Game {
         LOAD_SCREEN,
         OPTIONS_SCREEN,
         HISCORE_SCREEN,
-        CREDITS_SCREEN,
         LEVEL_CHOICE,
+        INSTRUCTIONS_SCREEN_0,
+        INSTRUCTIONS_SCREEN_1,
         LEVEL_1,
         LEVEL_2,
         LEVEL_3,
+        CREDITS_SCREEN,
         QUIT_SCREEN
     };
     
@@ -22,6 +24,7 @@ struct Game {
         BUTTON_LOAD,
         BUTTON_OPTIONS,
         BUTTON_HISCORE,
+        BUTTON_INSTRUCTIONS,
         BUTTON_CREDITS,
         BUTTON_QUIT,
         BUTTON_NEXT,
@@ -31,6 +34,7 @@ struct Game {
         BUTTON_MUSIC_VOL_UP,
         BUTTON_SFX_VOL_DOWN,
         BUTTON_SFX_VOL_UP,
+        BUTTON_TOGGLE_WINDOW_MODE,
         BUTTON_LEVEL_1,
         BUTTON_LEVEL_2,
         BUTTON_LEVEL_3
@@ -52,6 +56,13 @@ struct Game {
         SFX_CHANNEL_2,
         SFX_CHANNEL_3,
         TOTAL_CHANNEL
+    };
+
+    enum levels{
+        READY_LEVEL_1,
+        READY_LEVEL_2,
+        READY_LEVEL_3,
+        LEVELTOTAL
     };
 
     struct Events{
@@ -89,9 +100,9 @@ struct Game {
     SDL_Texture* your_score;
     SDL_Texture* music_volume;
     SDL_Texture* sfx_volume;
-    SDL_Texture* created_by;
-    SDL_Texture* noki;
-    SDL_Texture* joyee;
+    SDL_Texture* window_mode;
+    SDL_Texture* window_fullscreen;
+    SDL_Texture* window_windowed;
 
 
     int LEVEL_WIDTH, LEVEL_HEIGHT;  //dimensions of the total level.
@@ -99,13 +110,16 @@ struct Game {
     int current_screen;
     int sound_channel[TOTAL_CHANNEL];
     int sound_level[TOTAL_CHANNEL];
+    int score[LEVELTOTAL];
     bool game_running;
     bool level_end;
     bool game_pause;
+    bool fullscreen;
 
     Game() {
         window = NULL;
         renderer = NULL;
+        fullscreen = 0;
         RENDER_WIDTH = 800;
         RENDER_HEIGHT = 600;
         camera = {0, 0, RENDER_WIDTH, RENDER_HEIGHT};  //SDL_Rect camera now know what part to render
@@ -128,7 +142,9 @@ struct Game {
         sound_level[SFX_CHANNEL_2] = MIX_MAX_VOLUME;
         sound_level[SFX_CHANNEL_3] = MIX_MAX_VOLUME;
 
-        current_screen = CREDITS_SCREEN;
+        read_score();
+
+        current_screen = UI_SCREEN;
     }
     
     ~Game() {
@@ -136,43 +152,25 @@ struct Game {
     }
 
     //main initializer function
-    void init(std::string name, bool fullscreen) {
+    void init(std::string name) {
         if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) == 0)
             printf("SDL Initialised with video\n");
         else
             error;
 
         window = SDL_CreateWindow(name.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RENDER_WIDTH, RENDER_HEIGHT, fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_SHOWN);
-        if (window)
-            printf("Window intialised\n");
-        else
-            error;
+        if (window == NULL) error
 
-        if (IMG_Init(IMG_INIT_PNG) & (IMG_INIT_PNG == IMG_INIT_PNG))
-            printf("Image Initialised with PNG\n");
-        else
-            error_i;
+        if ((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != IMG_INIT_PNG) error_i;
 
-        if(TTF_Init() != -1)
-            printf("TTF initialized\n");
-        else
-            error_t
+        if(TTF_Init() == -1) error_t
 
-        if((Mix_Init(MIX_INIT_MP3)&MIX_INIT_MP3) == MIX_INIT_MP3)
-            printf("Mixer Initialized with mp3\n");
-        else 
-            error_m
+        if((Mix_Init(MIX_INIT_MP3)&MIX_INIT_MP3) != MIX_INIT_MP3) error_m
 
-        if(!Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 4096))
-            printf("Audio Opened\n");
-        else 
-            error_m
+        if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 4096)) error_m
 
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-        if (renderer)
-            printf("Renderer initialised\n");
-        else
-            error;
+        if (renderer == NULL) error;
     }
 
     void text_loader(int font_size_){
@@ -204,23 +202,29 @@ struct Game {
         sfx_volume = SDL_CreateTextureFromSurface(renderer, tempSurf);
         if(sfx_volume == NULL) error
 
-        tempSurf = TTF_RenderText_Blended(font, "A WORK OF", {227, 150, 62});
+        tempSurf = TTF_RenderText_Solid(font, "WINDOW MODE", {227, 150, 62});
         if(tempSurf == NULL) error_t
-        created_by = SDL_CreateTextureFromSurface(renderer, tempSurf);
-        if(created_by == NULL) error
+        window_mode = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        if(window_mode == NULL) error
 
-        tempSurf = TTF_RenderText_Blended_Wrapped(font, "Mahdi Mohd. Hossain Noki ROLL AE 02", {227, 150, 62}, 360);
+        tempSurf = TTF_RenderText_Solid(font, "WINDOWED", {227, 150, 62});
         if(tempSurf == NULL) error_t
-        noki = SDL_CreateTextureFromSurface(renderer, tempSurf);
-        if(noki == NULL) error
-
-        tempSurf = TTF_RenderText_Blended_Wrapped(font, "MOHIMA AHMED JOYEE ROLL ", {227, 150, 62}, 280);
+        window_windowed = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        if(window_windowed == NULL) error
+        
+        tempSurf = TTF_RenderText_Solid(font, "FULLSCREEN", {227, 150, 62});
         if(tempSurf == NULL) error_t
-        joyee = SDL_CreateTextureFromSurface(renderer, tempSurf);
-        if(joyee == NULL) error
+        window_fullscreen = SDL_CreateTextureFromSurface(renderer, tempSurf);
+        if(window_fullscreen == NULL) error
 
         SDL_FreeSurface(tempSurf);
         tempSurf = NULL;
+    }
+
+    void text_render(SDL_Texture* text, int x_, int y_){
+        SDL_Rect dest = {x_, y_, 0, 0};
+        SDL_QueryTexture(text, NULL, NULL, &dest.w, &dest.h);
+        SDL_RenderCopy(renderer, text, NULL, &dest);
     }
 
     void resize_window(int w_, int h_){
@@ -231,16 +235,36 @@ struct Game {
         SDL_SetWindowSize(window, RENDER_WIDTH, RENDER_HEIGHT);
     }
 
+    void toggle_fullscreen(){
+        fullscreen = !fullscreen;
+        SDL_SetWindowFullscreen(window, fullscreen);
+    }
+
+    void read_score(){
+        std::ifstream scoreboard("score/data.score");
+        if(scoreboard.fail()) printf("unable to read scoreboard\n");
+        for(int i=0; i<LEVELTOTAL; i++) scoreboard >> score[i];
+        scoreboard.close();
+    }
+
+    void write_score(){
+        std::ofstream scoreboard("score/data.score");
+        if(scoreboard.fail()) printf("unable to write into scoreboard\n");
+        for(int i=0; i<LEVELTOTAL; i++) scoreboard << std::to_string(score[i]) << "\n";
+        scoreboard.close();
+    }
+
     void button_action(int buttonID){
-        if(buttonID == BUTTON_START) current_screen = LEVEL_1;
+        if(buttonID == BUTTON_START) current_screen = INSTRUCTIONS_SCREEN_1;
         else if(buttonID == BUTTON_LOAD) current_screen = LEVEL_CHOICE;
         else if(buttonID == BUTTON_OPTIONS) current_screen = OPTIONS_SCREEN;
-        else if(buttonID == BUTTON_HISCORE) current_screen = LOAD_SCREEN;
+        else if(buttonID == BUTTON_HISCORE) current_screen = HISCORE_SCREEN;
         else if(buttonID == BUTTON_CREDITS) current_screen = CREDITS_SCREEN;
         else if(buttonID == BUTTON_QUIT) game_running = false;
         else if(buttonID == BUTTON_CONTINUE) game_pause = false;
         else if(buttonID == BUTTON_NEXT) current_screen = current_screen + 1;
         else if(buttonID == BUTTON_HOME) current_screen = UI_SCREEN, game_pause = false;
+        else if(buttonID == BUTTON_TOGGLE_WINDOW_MODE) toggle_fullscreen();
 
         else if(buttonID == BUTTON_MUSIC_VOL_DOWN) music_volume_coltrol('d');
         else if(buttonID == BUTTON_MUSIC_VOL_UP) music_volume_coltrol('i');
@@ -321,14 +345,14 @@ struct Game {
         SDL_DestroyTexture(sfx_volume);
         sfx_volume = NULL;
 
-        SDL_DestroyTexture(created_by);
-        created_by = NULL;
+        SDL_DestroyTexture(window_mode);
+        window_mode = NULL;
 
-        SDL_DestroyTexture(noki);
-        noki = NULL;
+        SDL_DestroyTexture(window_windowed);
+        window_windowed = NULL;
 
-        SDL_DestroyTexture(joyee);
-        joyee = NULL;
+        SDL_DestroyTexture(window_fullscreen);
+        window_fullscreen = NULL;
 
         SDL_Quit();
         IMG_Quit();
