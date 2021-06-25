@@ -155,10 +155,7 @@ struct Game {
 
     //main initializer function
     void init(std::string name) {
-        if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) == 0)
-            printf("SDL Initialised with video\n");
-        else
-            error;
+        if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) != 0) error;
 
         window = SDL_CreateWindow(name.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RENDER_WIDTH, RENDER_HEIGHT, fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_SHOWN);
         if (window == NULL) error
