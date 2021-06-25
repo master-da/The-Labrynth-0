@@ -13,6 +13,7 @@ int main(int argc, char* argv[]) {
 
     while (game->game_running) {
         if(game->current_screen == game->UI_SCREEN) UI(game);
+        else if(game->current_screen >= game->INSTRUCTIONS_SCREEN_0 && game->current_screen <= game->INSTRUCTIONS_SCREEN_2) instructions(game);
         else if(game->current_screen == game->OPTIONS_SCREEN) options(game);
         else if(game->current_screen == game->LEVEL_CHOICE) levels(game);
         else if(game->current_screen == game->HISCORE_SCREEN) hiscore(game);

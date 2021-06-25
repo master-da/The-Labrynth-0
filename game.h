@@ -12,6 +12,7 @@ struct Game {
         LEVEL_CHOICE,
         INSTRUCTIONS_SCREEN_0,
         INSTRUCTIONS_SCREEN_1,
+        INSTRUCTIONS_SCREEN_2,
         LEVEL_1,
         LEVEL_2,
         LEVEL_3,
@@ -255,7 +256,7 @@ struct Game {
     }
 
     void button_action(int buttonID){
-        if(buttonID == BUTTON_START) current_screen = INSTRUCTIONS_SCREEN_1;
+        if(buttonID == BUTTON_START) current_screen = INSTRUCTIONS_SCREEN_0;
         else if(buttonID == BUTTON_LOAD) current_screen = LEVEL_CHOICE;
         else if(buttonID == BUTTON_OPTIONS) current_screen = OPTIONS_SCREEN;
         else if(buttonID == BUTTON_HISCORE) current_screen = HISCORE_SCREEN;

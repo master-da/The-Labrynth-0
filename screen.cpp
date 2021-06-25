@@ -33,13 +33,9 @@ void UI(Game* game){
     buttont_hiscore->loadFromFile("png/buttons/hiscore.png");
     buttont_hiscore->set_dest(250, 375);
 
-    Button* button_credits = new Button(game->BUTTON_CREDITS, game);
-    button_credits->loadFromFile("png/buttons/credits.png");
-    button_credits->set_dest(250, 450);
-
     Button* button_quit = new Button(game->BUTTON_QUIT, game);
     button_quit->loadFromFile("png/buttons/quit.png");
-    button_quit->set_dest(250, 525);
+    button_quit->set_dest(250, 450);
 
     Background* ui_bg = new Background(game);
     ui_bg->loadFromFile("png/background/layer_0.png", "png/background/layer_1.png", "png/background/layer_2.png");
@@ -60,7 +56,6 @@ void UI(Game* game){
         button_levels->handle_event(e);
         button_options->handle_event(e);
         buttont_hiscore->handle_event(e);
-        button_credits->handle_event(e);
         button_quit->handle_event(e);
 
         ui_bg->render();
@@ -70,7 +65,6 @@ void UI(Game* game){
         button_levels->render();
         button_options->render();
         buttont_hiscore->render();
-        button_credits->render();
         button_quit->render();
 
         SDL_RenderPresent(game->renderer);
@@ -84,22 +78,20 @@ void UI(Game* game){
 
 void instructions(Game* game){
 
-    Button* button_home = new Button(game->BUTTON_HOME, game);
-    button_home->loadFromFile("png/buttons/home.png");
-    button_home->set_dest(50, 450);
-
-    Button* button_next = new Button(game->BUTTON_NEXT, game);
-    button_next->loadFromFile("png/buttons/continue.png");
-    button_next->set_dest(450, 450);
+    int delay = SDL_GetTicks();
 
     SDL_Texture* instructions;
+    SDL_Rect dest = {(game->RENDER_WIDTH-420)/2, 0, 420, 600};
     SDL_Surface* imgTemp;
 
     if(game->current_screen == game->INSTRUCTIONS_SCREEN_0){
-        imgTemp = IMG_Load("png/instructions/");
+        imgTemp = IMG_Load("png/instructions/instruction_0.png");
         if(imgTemp == NULL) error_i
-    } else {
-        imgTemp = IMG_Load("png/instructions/");
+    } else if (game->current_screen == game->INSTRUCTIONS_SCREEN_1){
+        imgTemp = IMG_Load("png/instructions/instruction_1.png");
+        if(imgTemp == NULL) error_i
+    } else if (game->current_screen == game->INSTRUCTIONS_SCREEN_2){
+        imgTemp = IMG_Load("png/instructions/instruction_2.png");
         if(imgTemp == NULL) error_i
     }
 
@@ -111,20 +103,38 @@ void instructions(Game* game){
 
     SDL_Event e;
 
-    while(game->game_running && (game->current_screen == game->INSTRUCTIONS_SCREEN_0 || game->current_screen == game->INSTRUCTIONS_SCREEN_1)){
+    while(game->game_running && (game->current_screen >= game->INSTRUCTIONS_SCREEN_0 && game->current_screen <= game->INSTRUCTIONS_SCREEN_2)){
         SDL_PollEvent(&e);
         if(e.type == SDL_QUIT) game->game_running = false;
 
         SDL_RenderClear(game->renderer);
-        SDL_SetRenderDrawColor(game->renderer, 255, 255, 255, 255);
+        SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
-        SDL_RenderCopy(game->renderer, instructions, NULL, NULL);
+        SDL_RenderCopy(game->renderer, instructions, NULL, &dest);
 
-        button_home->handle_event(e);
-        button_next->handle_event(e);
+        if(SDL_GetTicks() - delay > 1000 && (e.type == SDL_KEYUP || e.type == SDL_MOUSEBUTTONUP)){
+            delay = SDL_GetTicks();
+            game->current_screen++;
 
-        button_home->render();
-        button_next->render();
+            SDL_Surface* imgTemp;
+
+            if(game->current_screen == game->INSTRUCTIONS_SCREEN_0){
+                imgTemp = IMG_Load("png/instructions/instruction_0.png");
+                if(imgTemp == NULL) error_i
+            } else if (game->current_screen == game->INSTRUCTIONS_SCREEN_1){
+                imgTemp = IMG_Load("png/instructions/instruction_1.png");
+                if(imgTemp == NULL) error_i
+            } else if (game->current_screen == game->INSTRUCTIONS_SCREEN_2){
+                imgTemp = IMG_Load("png/instructions/instruction_2.png");
+                if(imgTemp == NULL) error_i
+            } else break;
+            instructions = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
+            
+            if(instructions == NULL) error
+
+            SDL_FreeSurface(imgTemp);
+            imgTemp = NULL;
+        };
 
         SDL_RenderPresent(game->renderer);
     }
@@ -343,7 +353,7 @@ void credits(Game* game){
     SDL_Texture* textwall[7];
     SDL_Rect dest[7];
 
-    char text[7][35] = {"A WORK OF", "MAHDI MOHAMMED HOSSAIN NOKI", "ROLL AE 02", "MOHIMA AHMED JOYEE", "ROLL", "COMPUTER SCIENCE AND ENGINEERING", "UNIVERSITY OF DHAKA"};
+    char text[7][35] = {"A WORK OF", "MAHDI MOHAMMED HOSSAIN NOKI", "ROLL AE 02", "MOHIMA AHMED JOYEE", "ROLL SK 42", "COMPUTER SCIENCE AND ENGINEERING", "UNIVERSITY OF DHAKA"};
 
     SDL_Surface* imgTemp = NULL;
     int w, h;
@@ -616,6 +626,26 @@ void level_three(Game* game){
     loadPlayer(player);
     player->set_spawn_point(134, 19);
 
+    Enemy* enemy_one = new Enemy(32, 32, game, tile, player);
+    loadEnemy(enemy_one);
+    enemy_one->set_spawn(111, 30, enemy_one->UP_DOWN);  
+
+    Enemy* enemy_two = new Enemy(32, 32, game, tile, player);
+    loadEnemy(enemy_two);
+    enemy_two->set_spawn(122, 69, enemy_two->LEFT_RIGHT);  
+
+    Enemy* enemy_three = new Enemy(32, 32, game, tile, player);
+    loadEnemy(enemy_three);
+    enemy_three->set_spawn(48, 91, enemy_three->LEFT_RIGHT);  
+
+    Enemy* enemy_four = new Enemy(32, 32, game, tile, player);
+    loadEnemy(enemy_four);
+    enemy_four->set_spawn(67, 45, enemy_four->UP_DOWN);  
+
+    Enemy* enemy_five = new Enemy(32, 32, game, tile, player);
+    loadEnemy(enemy_five);
+    enemy_five->set_spawn(25, 40, enemy_five->LEFT_RIGHT);  
+
     SDL_Event e;
 
     while(game->game_running && game->current_screen == game->LEVEL_3){
@@ -630,6 +660,12 @@ void level_three(Game* game){
         SDL_RenderClear(game->renderer);
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
+        enemy_one->handle_event(e);
+        enemy_two->handle_event(e);
+        enemy_three->handle_event(e);
+        enemy_four->handle_event(e);
+        enemy_five->handle_event(e);
+
         player->handle_event(e);
         tile->handle_event(e);
         game->event.reset(e);
@@ -640,6 +676,11 @@ void level_three(Game* game){
         game->camera_set(&player->dest);
 
         tile->render(game->camera);
+        enemy_one->render(game->camera);
+        enemy_two->render(game->camera);
+        enemy_three->render(game->camera);
+        enemy_four->render(game->camera);
+        enemy_five->render(game->camera);
         player->render();
 
         SDL_RenderPresent(game->renderer);

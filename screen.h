@@ -10,6 +10,8 @@
 
 void UI(Game*);
 
+void instructions(Game*);
+
 void levels(Game*);
 
 void options(Game*);
