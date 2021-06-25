@@ -8,7 +8,7 @@
 int main(int argc, char* argv[]) {
 
     Game* game = new Game();
-    game->init("a");
+    game->init("The Labrynth");
     game->text_loader(46);
 
     while (game->game_running) {
