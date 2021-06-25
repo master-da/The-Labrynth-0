@@ -16,7 +16,7 @@ void UI(Game* game){
     Mix_Music* bg_music = Mix_LoadMUS("sound/Enchanted_Festival.mp3");
     if(!bg_music) error_m
     Mix_FadeInMusic(bg_music, -1, 3000);
-    
+
     Button* button_start = new Button(game->BUTTON_START, game);
     button_start->loadFromFile("png/buttons/start.png");
     button_start->set_dest(250, 150);
@@ -194,42 +194,50 @@ void options(Game* game){
 
     Button* button_home = new Button(game->BUTTON_HOME, game);
     button_home->loadFromFile("png/buttons/home.png");
-    button_home->set_dest(50, game->RENDER_HEIGHT-button_home->dest.h-50);
+    button_home->set_dest(50, 50);
+
+    Button* button_instructions = new Button(game->BUTTON_INSTRUCTIONS, game);
+    button_instructions->loadFromFile("png/buttons/instructions.png");
+    button_instructions->set_dest(50, game->RENDER_HEIGHT-button_home->dest.h-50);
+
+    Button* button_credits = new Button(game->BUTTON_CREDITS, game);
+    button_credits->loadFromFile("png/buttons/credits.png");
+    button_credits->set_dest(450, game->RENDER_HEIGHT-button_home->dest.h-50);
 
     Button* music_vol_d = new Button(game->BUTTON_MUSIC_VOL_DOWN, game);
     music_vol_d->loadFromFile("png/options/left.png");
     music_vol_d->src = {0, 0, 36, 100};
-    music_vol_d->dest = {game->RENDER_WIDTH/2, 66, 36, 100};
+    music_vol_d->dest = {game->RENDER_WIDTH/2, 166, 36, 100};
 
     Button* music_vol_i = new Button(game->BUTTON_MUSIC_VOL_UP, game);
     music_vol_i->loadFromFile("png/options/right.png");
     music_vol_i->src = {0, 0, 36, 100};
-    music_vol_i->dest = {game->RENDER_WIDTH-music_vol_i->src.w, 66, 36, 100};
+    music_vol_i->dest = {game->RENDER_WIDTH-music_vol_i->src.w, 166, 36, 100};
 
     Button* sfx_vol_d = new Button(game->BUTTON_SFX_VOL_DOWN, game);
     sfx_vol_d->loadFromFile("png/options/left.png");
     sfx_vol_d->src = {0, 0, 36, 100};
-    sfx_vol_d->dest = {game->RENDER_WIDTH/2, 170, 36, 100};
+    sfx_vol_d->dest = {game->RENDER_WIDTH/2, 270, 36, 100};
 
     Button* sfx_vol_i = new Button(game->BUTTON_SFX_VOL_UP, game);
     sfx_vol_i->loadFromFile("png/options/right.png");
     sfx_vol_i->src = {0, 0, 36, 100};
-    sfx_vol_i->dest = {game->RENDER_WIDTH-sfx_vol_i->src.w, 170, 36, 100};
+    sfx_vol_i->dest = {game->RENDER_WIDTH-sfx_vol_i->src.w, 270, 36, 100};
 
     Button* toggle_window_left = new Button(game->BUTTON_TOGGLE_WINDOW_MODE, game);
     toggle_window_left->loadFromFile("png/options/left.png");
     toggle_window_left->src = {0, 0, 36, 100};
-    toggle_window_left->dest = {game->RENDER_WIDTH/2, 280, 36, 100};
+    toggle_window_left->dest = {game->RENDER_WIDTH/2, 380, 36, 100};
 
     Button* toggle_window_right = new Button(game->BUTTON_TOGGLE_WINDOW_MODE, game);
     toggle_window_right->loadFromFile("png/options/right.png");
     toggle_window_right->src = {0, 0, 36, 100};
-    toggle_window_right->dest = {game->RENDER_WIDTH-toggle_window_right->src.w, 280, 36, 100};
+    toggle_window_right->dest = {game->RENDER_WIDTH-toggle_window_right->src.w, 380, 36, 100};
 
-    SDL_Rect music_vol_dest = {50, 66, 310, 100};
-    SDL_Rect sfx_vol_dest = {50, 170, 310, 100};
+    SDL_Rect music_vol_dest = {50, 166, 310, 100};
+    SDL_Rect sfx_vol_dest = {50, 270, 310, 100};
     SDL_Rect mid_dest = {0, 0, 22, 100};
-    SDL_Rect window_mode_out_dest = {50, 280, 310, 100};
+    SDL_Rect window_mode_out_dest = {50, 380, 310, 100};
     SDL_Rect window_mode_in_dest = {toggle_window_left->dest.x + toggle_window_left->dest.w + 100, toggle_window_left->dest.y + 21, 0, 0};
 
     SDL_Event e;
@@ -242,6 +250,8 @@ void options(Game* game){
         SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
 
         button_home->handle_event(e);
+        button_instructions->handle_event(e);
+        button_credits->handle_event(e);
         music_vol_d->handle_event(e);
         music_vol_i->handle_event(e);
         sfx_vol_d->handle_event(e);
@@ -292,6 +302,9 @@ void options(Game* game){
             SDL_RenderCopy(game->renderer, game->window_windowed, NULL, &window_mode_in_dest);
         }
         toggle_window_right->render();
+
+        button_instructions->render();
+        button_credits->render();
 
         SDL_RenderPresent(game->renderer);
     }

@@ -52,26 +52,18 @@ struct Button{
                 (y > dest.y + dest.h));
     }
 
-    bool handle_event(SDL_Event& e){
+    void handle_event(SDL_Event& e){
         int x, y;
         SDL_GetMouseState(&x, &y);
         if(mouse_in_button(x, y)) {
-            if(e.type == SDL_MOUSEMOTION) {
-                src.x = src.w;
-                return 0;
-            }
+            if(e.type == SDL_MOUSEMOTION) src.x = src.w;
             else if(e.type == SDL_MOUSEBUTTONDOWN) {
                 src.x = 2*src.w;
                 Mix_PlayChannel(-1, click_sound, 0);
-                return 0;
             }
-            else if(src.x == 2*src.w && e.button.state == SDL_RELEASED) {
-                game->button_action(buttonID), src.x = 0;
-                return 1;
-            }
+            else if(src.x == 2*src.w && e.button.state == SDL_RELEASED) game->button_action(buttonID), src.x = 0;
         }
         else src.x = 0;
-        return 0;
     }
 
     void render(){

@@ -226,52 +226,23 @@ struct Enemy {
     //loading all the textures for enemy
     void loadFromFile() {
 
-        char walk_path[] = "png/enemy/animation/walk_enemy.png";
-        char attack_path[] = "png/enemy/animation/attack_enemy.png";
-        char hurt_path[] = "png/enemy/animation/hurt_enemy.png";
-        char dying_path[] = "png/enemy/animation/dying_enemy.png";
+        char anim_path[4][50] = {
+            "png/enemy/animation/walk_enemy.png",
+            "png/enemy/animation/attack_enemy.png",
+            "png/enemy/animation/hurt_enemy.png",
+            "png/enemy/animation/dying_enemy.png"
+        };
+
         char weapon_path[] = "png/enemy/weapon_enemy.png";
         char health_bar_path[] = "png/enemy/health_bar.png";
 
         char death_sound_path[] = "sound/Death.wav";
         char shoot_sound_path[] = "sound/Crossbow_Shot.wav";
 
-        SDL_Surface* tempImage = IMG_Load(walk_path);
-        if (!tempImage) error_i;
-        look[ENEMY_PATROL] = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (!look[ENEMY_PATROL]) error;
-        tempImage = NULL;
+        for(int i=0; i<4; i++) look[i] = game->texture_loader(anim_path[i]);
 
-        tempImage = IMG_Load(attack_path);
-        if (!tempImage) error_i
-        look[ENEMY_ATTACK] = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (!look[ENEMY_ATTACK]) error;
-        tempImage = NULL;
-
-        tempImage = IMG_Load(hurt_path);
-        if (!tempImage) error_i;
-        look[ENEMY_HURT] = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (!look[ENEMY_HURT]) error;
-        tempImage = NULL;
-
-        tempImage = IMG_Load(dying_path);
-        if (!tempImage) error_i;
-        look[ENEMY_DYING] = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (!look[ENEMY_DYING]) error;
-        tempImage = NULL;
-
-        tempImage = IMG_Load(weapon_path);
-        if (!tempImage) error_i;
-        projectile_look = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (!projectile_look) error;
-
-        tempImage = IMG_Load(health_bar_path);
-        if (!tempImage) error_i;
-        health_bar = SDL_CreateTextureFromSurface(game->renderer, tempImage);
-        if (!health_bar) error;
-
-        SDL_FreeSurface(tempImage);
-        tempImage = NULL;
+        projectile_look = game->texture_loader(weapon_path);
+        health_bar = game->texture_loader(health_bar_path);
 
         death_sound = Mix_LoadWAV(death_sound_path);
         if(!death_sound) error_m
@@ -313,7 +284,6 @@ struct Enemy {
         y = center->y - y;
 
         int distance = x * x + y * y;
-        printf("distance %d r*r %d\n", distance, r * r);
         return (distance <= r * r);
     }
 

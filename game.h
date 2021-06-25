@@ -7,12 +7,12 @@ struct Game {
     enum screens {
         UI_SCREEN,
         LOAD_SCREEN,
-        OPTIONS_SCREEN,
-        HISCORE_SCREEN,
-        LEVEL_CHOICE,
         INSTRUCTIONS_SCREEN_0,
         INSTRUCTIONS_SCREEN_1,
         INSTRUCTIONS_SCREEN_2,
+        OPTIONS_SCREEN,
+        HISCORE_SCREEN,
+        LEVEL_CHOICE,
         LEVEL_1,
         LEVEL_2,
         LEVEL_3,
@@ -105,6 +105,7 @@ struct Game {
     SDL_Texture* window_fullscreen;
     SDL_Texture* window_windowed;
 
+    SDL_Surface* tmpImg;
 
     int LEVEL_WIDTH, LEVEL_HEIGHT;  //dimensions of the total level.
     int RENDER_WIDTH, RENDER_HEIGHT;  //dimensions of the camera that will follow player. The area of the map to be rendered
@@ -172,6 +173,15 @@ struct Game {
 
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
         if (renderer == NULL) error;
+    }
+
+    SDL_Texture* texture_loader(char file_path[]){
+        SDL_Texture* t;
+        tmpImg = IMG_Load(file_path);
+        if(tmpImg == NULL) error_i
+        t = SDL_CreateTextureFromSurface(renderer, tmpImg);
+        if(t == NULL) error
+        return t;
     }
 
     void text_loader(int font_size_){
@@ -256,10 +266,11 @@ struct Game {
     }
 
     void button_action(int buttonID){
-        if(buttonID == BUTTON_START) current_screen = INSTRUCTIONS_SCREEN_0;
+        if(buttonID == BUTTON_START) current_screen = LEVEL_1;
         else if(buttonID == BUTTON_LOAD) current_screen = LEVEL_CHOICE;
         else if(buttonID == BUTTON_OPTIONS) current_screen = OPTIONS_SCREEN;
         else if(buttonID == BUTTON_HISCORE) current_screen = HISCORE_SCREEN;
+        else if(buttonID == BUTTON_INSTRUCTIONS) current_screen = INSTRUCTIONS_SCREEN_0;
         else if(buttonID == BUTTON_CREDITS) current_screen = CREDITS_SCREEN;
         else if(buttonID == BUTTON_QUIT) game_running = false;
         else if(buttonID == BUTTON_CONTINUE) game_pause = false;
@@ -354,6 +365,9 @@ struct Game {
 
         SDL_DestroyTexture(window_fullscreen);
         window_fullscreen = NULL;
+
+        SDL_FreeSurface(tmpImg);
+        tmpImg = NULL;
 
         SDL_Quit();
         IMG_Quit();

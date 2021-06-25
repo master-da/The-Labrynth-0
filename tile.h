@@ -111,30 +111,15 @@ struct Tile {
         char button_path[] = "png/tile/button.png";
         char gate_path[] = "png/tile/gate.png";
         char door_open_sound_path[] = "sound/doorOpen_1.wav";
-
-        SDL_Surface* imgTemp = IMG_Load(tile_path);
-        if (imgTemp == NULL) error_i;
-        tile_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (tile_image == NULL) error;
-
-
-        imgTemp = IMG_Load(chest_path);
-        if(imgTemp == NULL) error_i 
-        chest_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if(chest_image == NULL) error;
-
-        imgTemp = IMG_Load(button_path);
-        if(imgTemp == NULL) error_i 
-        button_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if(button_image == NULL) error;
-
-        imgTemp = IMG_Load(gate_path);
-        if(imgTemp == NULL) error_i 
-        gate_image = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if(gate_image == NULL) error;
-
-        SDL_FreeSurface(imgTemp);
-
+        
+        tile_image = game->texture_loader(tile_path);
+        
+        chest_image = game->texture_loader(chest_path);
+        
+        button_image = game->texture_loader(button_path);
+        
+        gate_image = game->texture_loader(gate_path);
+        
         door_open_sound = Mix_LoadWAV(door_open_sound_path);
         if(!door_open_sound) error_m
     }

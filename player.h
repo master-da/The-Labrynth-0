@@ -59,7 +59,7 @@ struct Player {
     bool dead;  //player can't move if it is in attack animation
 
     SDL_Texture* look[PLAYER_TOTAL_STATI];  //look is player's texture. differnt spritesheet for walking attacking etc
-    SDL_Texture* heart_look;
+    SDL_Texture* life_look;
     SDL_Texture* reward_look[REWARD_TOTAL];
     SDL_Rect src;                           //source rectangle from the spritesheet
     SDL_Rect dest;                          //destination rentangle in the map
@@ -106,8 +106,8 @@ struct Player {
             look[i] = NULL;
         }
 
-        SDL_DestroyTexture(heart_look);
-        heart_look = NULL;
+        SDL_DestroyTexture(life_look);
+        life_look = NULL;
 
         for(int i=0; i<REWARD_TOTAL; i++){
             SDL_DestroyTexture(reward_look[i]);
@@ -125,72 +125,30 @@ struct Player {
     //loading all the player sprites
     void loadFromFile() {
 
-        char idle_path[] = "png/player/animation/idle_player.png";
-        char move_path[] = "png/player/animation/walk_player.png";
-        char attack_path[] = "png/player/animation/attack_player.png";
-        char hurt_path[] = "png/player/animation/hurt_player.png";
-        char dying_path[] = "png/player/animation/dying_player.png";
+        char anim_path[5][50] = {
+            "png/player/animation/idle_player.png",
+            "png/player/animation/walk_player.png",
+            "png/player/animation/attack_player.png",
+            "png/player/animation/hurt_player.png",
+            "png/player/animation/dying_player.png"
+        };
 
-        char berserk[] = "png/player/powerup/berserk.png";
-        char heart[] = "png/player/powerup/heart.png";
-        char immunity[] = "png/player/powerup/immunity.png";
-        char score[] = "png/player/powerup/score.png";
-        char walk_sound_path[] = "sound/sfx_step_grass_l.wav";
+        char reward_path[4][50] = {
+            "png/player/powerup/berserk.png",
+            "png/player/powerup/heart.png",
+            "png/player/powerup/immunity.png",
+            "png/player/powerup/score.png"           
+        };
+        
+        char walk_sound_path[] =  "sound/sfx_step_grass_l.wav";
 
-        char life[] = "png/player/life.png";
+        char life_path[] = "png/player/life.png";
 
-        SDL_Surface* imgTemp = IMG_Load(idle_path);
-        if (!imgTemp) error_i
-        look[PLAYER_IDLE] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!look[PLAYER_IDLE]) error;
+        for(int i=0; i<5; i++) look[i] = game->texture_loader(anim_path[i]);
 
-        imgTemp = IMG_Load(move_path);
-        if (!imgTemp) error_i
-        look[PLAYER_MOVE] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!look[PLAYER_MOVE]) error;
+        life_look = game->texture_loader(life_path);
 
-        imgTemp = IMG_Load(attack_path);
-        if (!imgTemp) error_i
-        look[PLAYER_ATTACK] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!look[PLAYER_ATTACK]) error;
-
-        imgTemp = IMG_Load(hurt_path);
-        if (!imgTemp) error_i
-        look[PLAYER_HURT] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!look[PLAYER_HURT]) error;
-
-        imgTemp = IMG_Load(dying_path);
-        if (!imgTemp)error_i
-        look[PLAYER_DYING] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!look[PLAYER_DYING]) error;
-
-        imgTemp = IMG_Load(life);
-        if (!imgTemp) error_i;
-        heart_look = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!heart_look) error;
-
-        imgTemp = IMG_Load(heart);
-        if (!imgTemp) error_i;
-        reward_look[HEALTH_REGEN] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!reward_look[HEALTH_REGEN]) error;
-
-        imgTemp = IMG_Load(berserk);
-        if (!imgTemp) error_i;
-        reward_look[BERSERK] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!reward_look[BERSERK]) error;
-
-        imgTemp = IMG_Load(immunity);
-        if (!imgTemp) error_i;
-        reward_look[IMMUNITY] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!reward_look[IMMUNITY]) error;
-
-        imgTemp = IMG_Load(score);
-        if (!imgTemp) error_i;
-        reward_look[SCORE] = SDL_CreateTextureFromSurface(game->renderer, imgTemp);
-        if (!reward_look[SCORE]) error;
-
-        SDL_FreeSurface(imgTemp);
-        imgTemp = NULL;
+        for(int i=0; i<4; i++) reward_look[i] = game->texture_loader(reward_path[i]);
 
         walk_sound = Mix_LoadWAV(walk_sound_path);
         if(!walk_sound) error_m
@@ -238,8 +196,8 @@ struct Player {
     //moving player based on input.
     void move() {
         
-        static int delay = SDL_GetTicks() - 400;
-        if(SDL_GetTicks() - delay > 400) {
+        static int delay = SDL_GetTicks() - 1300;
+        if(SDL_GetTicks() - delay > 720) {
             delay = SDL_GetTicks();
             Mix_PlayChannel(music_channel, walk_sound, 0);
         }
@@ -366,7 +324,7 @@ struct Player {
         int temp = stats->hit_points;
         int padding = 32;
         for(SDL_Rect heart_dest = {game->RENDER_WIDTH-24 - padding, padding, 24, 24}; temp; temp--, heart_dest.x -= heart_dest.w)
-            SDL_RenderCopy(game->renderer, heart_look, NULL, &heart_dest);
+            SDL_RenderCopy(game->renderer, life_look, NULL, &heart_dest);
     }
 
     void reward_render(){
